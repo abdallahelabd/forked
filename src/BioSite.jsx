@@ -92,7 +92,7 @@ export default function BioSite() {
         .filter(log => isAdmin || log.userName === userName || (log.userName === "Abdallah" && log.recipient === userName))
         .map(log => {
           const userLine = log.userName === "Abdallah"
-  ? `🫅 Abdallah: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByUser ? " <span class='text-blue-400'>✓</span>" : ""}`
+  ? `🫅 Abdallah: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByUser ? ` <span class='text-blue-400'>✓</span> <span class='text-green-500 text-xs'>(Seen at ${log.seenTime || '✓✓'})</span>` : ""}`
   : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400 transition-opacity duration-500'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400 transition-opacity duration-500 animate-pulse'>✓</span>" : ""}`;
           return userLine;
         });
