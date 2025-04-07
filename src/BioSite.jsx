@@ -71,20 +71,20 @@ export default function BioSite() {
 
     // Mark admin messages as seen by user
     if (!isAdmin) {
-      messages.forEach((msg) => {
-        if (
-  msg.userName === "Abdallah" &&
-  msg.recipient === userName &&
-  !msg.seenByUser
-) {
-  const docRef = doc(db, "chat", msg.id);
-  updateDoc(docRef, {
-  seenByUser: true,
-  seenTime: new Date().toLocaleTimeString()
-});
-      }
-    });
-        }
+  messages.forEach((msg) => {
+    if (
+      msg.userName === "Abdallah" &&
+      msg.recipient === userName &&
+      !msg.seenByUser
+    ) {
+      const docRef = doc(db, "chat", msg.id);
+      updateDoc(docRef, {
+        seenByUser: true,
+        seenTime: new Date().toLocaleTimeString()
+      });
+    }
+  });
+}
       });
     }
 
