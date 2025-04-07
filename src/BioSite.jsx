@@ -85,16 +85,16 @@ export default function BioSite() {
     setChatLog(messages);
 
     if (!isAdmin) {
-  messages
-    .filter((msg) => msg.userName === "Abdallah" && msg.recipient === userName && !msg.seenByUser)
-    .forEach((msg) => {
-      const docRef = doc(db, "chat", msg.id);
-      updateDoc(docRef, {
-        seenByUser: true,
-        seenTime: new Date().toLocaleTimeString(),
-      });
-    });
-}
+      messages
+        .filter((msg) => msg.userName === "Abdallah" && msg.recipient === userName && !msg.seenByUser)
+        .forEach((msg) => {
+          const docRef = doc(db, "chat", msg.id);
+          updateDoc(docRef, {
+            seenByUser: true,
+            seenTime: new Date().toLocaleTimeString(),
+          });
+        });
+    }
     }
 
     if (isAdmin && adminPanelOpen) {
@@ -108,10 +108,10 @@ export default function BioSite() {
 
     const outputLines = messages
       .filter(log =>
-  isAdmin ||
-  log.userName === userName || // messages sent by this user
-  log.recipient === userName   // messages sent to this user (including by admin)
-)
+        isAdmin ||
+        log.userName === userName ||
+        log.recipient === userName
+      )
 
       .map(log => {
         const userLine = log.userName === "Abdallah"
