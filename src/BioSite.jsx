@@ -121,29 +121,11 @@ export default function BioSite() {
 
     setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
   });
-
-    if (!isAdmin) {
-      messages
-        .filter((msg) => msg.recipient === userName && !msg.seenByUser)
-        .forEach((msg) => {
-          const docRef = doc(db, "chat", msg.id);
-          updateDoc(docRef, {
-            seenByUser: true,
-            seenTime: new Date().toLocaleTimeString(),
-          });
-        });
-    }
-
-    if (isAdmin) {
-      messages
-        .filter((msg) => !msg.seenByAdmin && msg.userName !== "Abdallah")
-        .forEach((msg) => {
-          const docRef = doc(db, "chat", msg.id);
-          updateDoc(docRef, { seenByAdmin: true });
-        });
-    }
+    
       });
-    const outputLines = messages
+
+    // Duplicate block removed below
+    // const outputLines = messages
       .filter(log =>
         isAdmin ||
         log.userName === userName ||
