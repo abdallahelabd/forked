@@ -300,7 +300,12 @@ export default function BioSite() {
                             className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
                           >
                             <p className="text-green-100">{msg.user}</p>
-                            <span className="block text-xs text-green-500 mt-1">{msg.time}</span>
+                            $1
+{msg.userName === "Abdallah" && (
+  <span className="block text-[10px] text-green-400 mt-0.5">
+    {msg.seenByAdmin ? "Seen ✓✓" : "Sent ✓"}
+  </span>
+)}
                           </li>
                         ))}
                       </ul>
