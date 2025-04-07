@@ -80,10 +80,18 @@ export default function BioSite() {
       }
 
       if (isAdmin && adminPanelOpen) {
-        messages.forEach((msg) => {
-          if (!msg.seenByAdmin) {
-            const docRef = doc(db, "chat", msg.id);
-            updateDoc(docRef, { seenByAdmin: true });
+  messages.forEach((msg) => {
+    if (!msg.seenByAdmin) {
+      const docRef = doc(db, "chat", msg.id);
+      updateDoc(docRef, { seenByAdmin: true });
+    }
+    // Mark user messages as seen by admin
+    if (msg.userName !== "Abdallah" && !msg.seenByAdmin) {
+      const docRef = doc(db, "chat", msg.id);
+      updateDoc(docRef, { seenByAdmin: true });
+    }
+  });
+});
           }
         });
       }
@@ -307,7 +315,7 @@ export default function BioSite() {
                       return acc;
                     }, {})
                   ).map(([participant, messages]) => (
-                    <div key={participant} className="border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col">
+                    <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
                       <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
 <button
   className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
