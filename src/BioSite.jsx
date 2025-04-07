@@ -66,7 +66,7 @@ export default function BioSite() {
   useEffect(() => {
   const q = query(chatCollection, orderBy("timestamp"));
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data()));
     setChatLog(messages);
 
     if (!isAdmin) {
@@ -142,7 +142,7 @@ export default function BioSite() {
           if (userName !== "Abdallah") {
   await emailjs.send("service_2fdtfyg", "template_btw21b8", {
     user_name: userName,
-    message,
+    message: trimmed,
     to_email: "abdallahelabd05@gmail.com"
   }, "vhPVKbLsc89CisiWl");
 }
