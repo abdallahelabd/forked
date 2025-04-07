@@ -107,7 +107,12 @@ export default function BioSite() {
           time,
           timestamp: serverTimestamp()
         };
-        await addDoc(chatCollection, newMsg);
+        try {
+          const docRef = await addDoc(chatCollection, newMsg);
+          console.log("✅ Message written with ID:", docRef.id);
+        } catch (err) {
+          console.error("❌ Failed to write message to Firestore:", err);
+        }
         try {
           await emailjs.send("service_2fdtfyg", "template_btw21b8", {
             user_name: userName,
