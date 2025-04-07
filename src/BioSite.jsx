@@ -69,25 +69,23 @@ export default function BioSite() {
     const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setChatLog(messages);
 
-    // Mark admin messages as seen by user
     if (!isAdmin) {
-  messages.forEach((msg) => {
-    if (
-      msg.userName === "Abdallah" &&
-      msg.recipient === userName &&
-      !msg.seenByUser
-    ) {
-      const docRef = doc(db, "chat", msg.id);
-      updateDoc(docRef, {
-        seenByUser: true,
-        seenTime: new Date().toLocaleTimeString()
+      messages.forEach((msg) => {
+        if (
+          msg.userName === "Abdallah" &&
+          msg.recipient === userName &&
+          !msg.seenByUser
+        ) {
+          const docRef = doc(db, "chat", msg.id);
+          updateDoc(docRef, {
+            seenByUser: true,
+            seenTime: new Date().toLocaleTimeString()
+          });
+        }
       });
     }
-  });
-}
-      });
 
-if (isAdmin && adminPanelOpen) {
+    if (isAdmin && adminPanelOpen) {
       messages.forEach((msg) => {
         if (!msg.seenByAdmin && msg.userName !== "Abdallah") {
           const docRef = doc(db, "chat", msg.id);
@@ -106,6 +104,10 @@ if (isAdmin && adminPanelOpen) {
       });
 
     setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
+  });
+
+  return () => unsubscribe();
+}, [isAdmin, userName, adminPanelOpen]);
   });
 
   return () => unsubscribe();
