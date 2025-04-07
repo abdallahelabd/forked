@@ -330,7 +330,22 @@ export default function BioSite() {
                             key={index}
                             className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
                           >
-                            <p className="text-green-100">{msg.user}</p>
+                            <p className="text-green-100">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}</p>
+<div className="mt-1 flex gap-2">
+  {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+    <button
+      key={emoji}
+      onClick={async () => {
+        const docRef = doc(db, 'chat', msg.id);
+        const currentReaction = msg.reaction || "";
+        await updateDoc(docRef, { reaction: emoji });
+      }}
+      className="text-sm hover:scale-110 transition-transform"
+    >
+      {emoji}
+    </button>
+  ))}
+</div>
 {isAdmin && (
   <button
     className="text-xs text-red-400 mt-1 hover:text-red-600"
@@ -363,12 +378,13 @@ export default function BioSite() {
           if (!message) return;
           const time = new Date().toLocaleTimeString();
           await addDoc(chatCollection, {
-            user: message,
-            recipient: participant,
-            userName: "Abdallah",
-            time,
-            timestamp: serverTimestamp()
-          });
+  user: message,
+  recipient: participant,
+  userName: "Abdallah",
+  time,
+  timestamp: serverTimestamp(),
+  seenByUser: false
+});
           input.value = "";
 
           try {
