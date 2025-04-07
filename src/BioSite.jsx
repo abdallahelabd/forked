@@ -64,50 +64,44 @@ export default function BioSite() {
   const outputRef = useRef(null);
 
   useEffect(() => {
-    const q = query(chatCollection, orderBy("timestamp"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setChatLog(messages);
+  const q = query(chatCollection, orderBy("timestamp"));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setChatLog(messages);
 
-      // Mark admin messages as seen by user
-      if (!isAdmin) {
-        messages.forEach((msg) => {
-          if (msg.userName === "Abdallah" && msg.recipient === userName && !msg.seenByUser) {
-            const docRef = doc(db, "chat", msg.id);
-            updateDoc(docRef, { seenByUser: true, seenTime: new Date().toLocaleTimeString() });
-          }
-        });
-      }
-
-      if (isAdmin && adminPanelOpen) {
-  messages.forEach((msg) => {
-    if (!msg.seenByAdmin && msg.userName !== "Abdallah") {
-      const docRef = doc(db, "chat", msg.id);
-      updateDoc(docRef, { seenByAdmin: true });
+    // Mark admin messages as seen by user
+    if (!isAdmin) {
+      messages.forEach((msg) => {
+        if (msg.userName === "Abdallah" && msg.recipient === userName && !msg.seenByUser) {
+          const docRef = doc(db, "chat", msg.id);
+          updateDoc(docRef, { seenByUser: true, seenTime: new Date().toLocaleTimeString() });
+        }
+      });
     }
-  });
-});
-}
-    }
-  });
-});
-}
-          }
-        });
-      }
 
-      const outputLines = messages
-        .filter(log => isAdmin || log.userName === userName || (log.userName === "Abdallah" && log.recipient === userName))
-        .map(log => {
-          const userLine = log.userName === "Abdallah"
-  ? `🫅 Abdallah: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByUser ? ` <span class='text-blue-400'>✓</span> <span class='text-green-500 text-xs'>(Seen at ${log.seenTime || '✓✓'})</span>` : ""}`
-  : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400 transition-opacity duration-500'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400 transition-opacity duration-500 animate-pulse'>✓</span>" : ""}`;
-          return userLine;
-        });
-      setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
-    });
-    return () => unsubscribe();
-  }, [isAdmin, userName]);
+    if (isAdmin && adminPanelOpen) {
+      messages.forEach((msg) => {
+        if (!msg.seenByAdmin && msg.userName !== "Abdallah") {
+          const docRef = doc(db, "chat", msg.id);
+          updateDoc(docRef, { seenByAdmin: true });
+        }
+      });
+    }
+
+    const outputLines = messages
+      .filter(log => isAdmin || log.userName === userName || (log.userName === "Abdallah" && log.recipient === userName))
+      .map(log => {
+        const userLine = log.userName === "Abdallah"
+          ? `🫅 Abdallah: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByUser ? ` <span class='text-blue-400'>✓</span> <span class='text-green-500 text-xs'>(Seen at ${log.seenTime || '✓✓'})</span>` : ""}`
+          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400 transition-opacity duration-500'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400 transition-opacity duration-500 animate-pulse'>✓</span>" : ""}`;
+        return userLine;
+      });
+
+    setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
+  });
+
+  return () => unsubscribe();
+}, [isAdmin, userName, adminPanelOpen]);
 
   useEffect(() => {
     outputRef.current?.scrollIntoView({ behavior: "smooth" });
