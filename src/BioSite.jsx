@@ -14,6 +14,30 @@ import {
 
 const chatCollection = collection(db, "chat");
 
+const pinnedCommands = ["hello", "experience", "skills", "chat"];
+
+function PinnedCommands({ setCommand, inputRef }) {
+  return (
+    <div className="mt-10 border border-green-700 p-4 rounded-xl bg-green-900/10 backdrop-blur-md">
+      <p className="text-green-300 text-xl mb-3 font-bold underline">Pinned Commands</p>
+      <div className="flex flex-wrap gap-4">
+        {pinnedCommands.map((cmd) => (
+          <button
+            key={cmd}
+            onClick={() => {
+              setCommand(cmd);
+              inputRef.current?.focus();
+            }}
+            className="px-4 py-2 bg-green-500 text-black font-semibold rounded-2xl shadow-md hover:bg-green-400 hover:scale-105 transition-all duration-200"
+          >
+            {cmd}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function BioSite() {
   const [command, setCommand] = useState("");
   const [staticOutput, setStaticOutput] = useState(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05"]);
@@ -188,6 +212,8 @@ export default function BioSite() {
               autoFocus
             />
           </div>
+
+          <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
         </motion.div>
 
         {isAdmin && (
