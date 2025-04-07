@@ -1,11 +1,10 @@
-/* Firebase-integrated version with real-time global chat */
+// Firebase-integrated version with real-time global chat
 import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "firebase/firestore";
 
-// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCvJp9MjJ3CJGDcM1dj2U0LYBCtdc5BBmk",
   authDomain: "abdallahbio-18d4c.firebaseapp.com",
@@ -17,7 +16,6 @@ const firebaseConfig = {
   measurementId: "G-GYD479RY6M"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const chatCollection = collection(db, "chat");
@@ -70,7 +68,7 @@ export default function BioSite() {
       const messages = snapshot.docs.map(doc => doc.data());
       setChatLog(messages);
       const outputLines = messages
-        .filter(log => isAdmin || log.userName === userName)
+        .filter(log => isAdmin || log.userName === userName || log.userName === "Abdallah")
         .map(log => {
           const userLine = log.userName === "Abdallah"
             ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
