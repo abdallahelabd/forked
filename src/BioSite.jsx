@@ -151,6 +151,8 @@ export default function BioSite() {
         setStaticOutput((prev) => [...prev, `$ ${command}`, "🧹 This command no longer clears global chat."]);
         setCommand("");
         return;
+        setCommand("");
+        return;
       case "admin":
         if (args[0] === "1234") {
           setIsAdmin(true);
@@ -293,6 +295,19 @@ export default function BioSite() {
                   ).map(([participant, messages]) => (
                     <div key={participant} className="border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col">
                       <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
+<button
+  className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
+  onClick={async () => {
+  const confirmClear = window.confirm(`Are you sure you want to clear the conversation with ${participant}?`);
+  if (!confirmClear) return;
+  const idsToDelete = messages.map((m) => m.id);
+  for (const id of idsToDelete) {
+    await deleteDoc(doc(db, "chat", id));
+  }
+}}
+>
+  🗑 Clear conversation
+</button>
                       <ul className="space-y-2 text-sm">
                         {messages.map((msg, index) => (
                           <li
@@ -300,7 +315,20 @@ export default function BioSite() {
                             className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
                           >
                             <p className="text-green-100">{msg.user}</p>
-                            $1
+{isAdmin && (
+  <button
+    className="text-xs text-red-400 mt-1 hover:text-red-600"
+    onClick={async () => {
+      const confirmDelete = window.confirm("Delete this message?");
+      if (confirmDelete) {
+        await deleteDoc(doc(db, 'chat', msg.id));
+      }
+    }}
+  >
+    🗑 Delete
+  </button>
+)}
+                            <span className=\"block text-xs text-green-500 mt-1\">{msg.time}</span>
 {msg.userName === "Abdallah" && (
   <span className="block text-[10px] text-green-400 mt-0.5">
     {msg.seenByAdmin ? "Seen ✓✓" : "Sent ✓"}
