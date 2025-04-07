@@ -104,6 +104,44 @@ export default function BioSite() {
           updateDoc(docRef, { seenByAdmin: true });
         });
     }
+
+    const outputLines = messages
+      .filter(log =>
+        isAdmin ||
+        log.userName === userName ||
+        log.recipient === userName
+      )
+      .map(log => {
+        const reaction = log.reaction ? ` <span class='ml-2'>${log.reaction}</span>` : "";
+        const userLine = log.userName === "Abdallah"
+          ? `🫅 Abdallah: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${isAdmin && log.seenByUser && log.recipient !== 'Abdallah' ? ` <span class='text-blue-400'>✓</span> <span class='text-green-500 text-xs'>(Seen at ${log.seenTime || '✓✓'})</span>` : ""}${reaction}`
+          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
+        return userLine;
+      });
+
+    setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
+  });
+
+    if (!isAdmin) {
+      messages
+        .filter((msg) => msg.recipient === userName && !msg.seenByUser)
+        .forEach((msg) => {
+          const docRef = doc(db, "chat", msg.id);
+          updateDoc(docRef, {
+            seenByUser: true,
+            seenTime: new Date().toLocaleTimeString(),
+          });
+        });
+    }
+
+    if (isAdmin) {
+      messages
+        .filter((msg) => !msg.seenByAdmin && msg.userName !== "Abdallah")
+        .forEach((msg) => {
+          const docRef = doc(db, "chat", msg.id);
+          updateDoc(docRef, { seenByAdmin: true });
+        });
+    }
       });
     const outputLines = messages
       .filter(log =>
