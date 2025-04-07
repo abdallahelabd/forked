@@ -123,7 +123,6 @@ export default function BioSite() {
 
   return () => unsubscribe();
 }, [isAdmin, userName, adminPanelOpen]);
-  });
 
   return () => unsubscribe();
 }, [isAdmin, userName, adminPanelOpen]);
