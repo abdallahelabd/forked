@@ -82,7 +82,7 @@ export default function BioSite() {
         .filter(log => isAdmin || log.userName === userName || (log.userName === "Abdallah" && log.recipient === userName))
         .map(log => {
           const userLine = log.userName === "Abdallah"
-            ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
+            ? `<span class='text-yellow-400'> Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
             : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400 transition-opacity duration-500'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400 transition-opacity duration-500 animate-pulse'>✓</span>" : ""}`;
           return userLine;
         });
@@ -119,8 +119,7 @@ export default function BioSite() {
           timestamp: serverTimestamp()
         };
         try {
-          const docRef = await addDoc(chatCollection, newMsg);
-          console.log("✅ Message written with ID:", docRef.id);
+          await addDoc(chatCollection, newMsg);
         } catch (err) {
           console.error("❌ Failed to write message to Firestore:", err);
         }
@@ -149,7 +148,7 @@ export default function BioSite() {
     let result = [];
     switch (baseCmd) {
       case "clear":
-        setStaticOutput((prev) => [...prev, `$ ${command}`, "🪩 This command no longer clears global chat."]);
+        setStaticOutput((prev) => [...prev, `$ ${command}`, "🧹 This command no longer clears global chat."]);
         setCommand("");
         return;
       case "admin":
@@ -241,20 +240,20 @@ export default function BioSite() {
         </motion.div>
 
         {isAdmin && (
-          <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-white text-black rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50 border border-green-700">
+          <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
             <button
-              className="sm:hidden block mb-2 p-2 text-green-700 font-semibold"
+              className="sm:hidden block mb-2 text-green-400 underline"
               onClick={() => setAdminPanelOpen(!adminPanelOpen)}
             >
               {adminPanelOpen ? "Hide Admin Panel" : "Show Admin Panel"}
             </button>
             {(adminPanelOpen || window.innerWidth >= 640) && (
-              <div className="flex flex-col h-full p-4">
-                <h2 className="font-bold text-lg mb-2 text-green-800">Admin Panel</h2>
-                <p className="mb-3 text-sm text-gray-600">Type <code>logout</code> to exit admin mode.</p>
+              <div className="flex flex-col h-full">
+                <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
+                <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
                 <textarea
                   placeholder="Type your message as admin..."
-                  className="w-full bg-gray-100 border border-green-600 text-black p-2 rounded mb-2 resize-none text-sm sm:text-base"
+                  className="w-full bg-black border border-green-600 text-green-200 p-2 rounded mb-2 resize-none text-sm sm:text-base"
                   rows={3}
                   onKeyDown={async (e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -283,17 +282,26 @@ export default function BioSite() {
                     }
                   }}
                 />
-                <div className="bg-gray-100 rounded p-3 flex-1 overflow-y-auto">
-                  <h3 className="text-green-700 text-sm mb-2 font-bold">User Messages</h3>
-                  <ul className="space-y-2 text-sm">
-                    {chatLog.map((log, index) => (
-                      <li key={index} className="p-2 bg-white border border-gray-300 rounded shadow-sm">
-                        <span className="font-semibold text-green-800">👤 {log.userName}</span>
-                        <span className="block text-gray-800 mt-1">{log.user}</span>
-                        <span className="block text-xs text-gray-500 mt-1">{log.time}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="flex-1 overflow-y-auto space-y-4 mt-3">
+                  {Object.entries(
+                    chatLog.reduce((acc, log) => {
+                      if (!acc[log.userName]) acc[log.userName] = [];
+                      acc[log.userName].push(log);
+                      return acc;
+                    }, {})
+                  ).map(([user, messages]) => (
+                    <div key={user} className="border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md">
+                      <h4 className="font-bold text-green-400 mb-3 text-lg">👤 {user}</h4>
+                      <ul className="space-y-2 text-sm">
+                        {messages.map((msg, index) => (
+                          <li key={index} className="bg-green-900/20 rounded-xl p-3 shadow-inner">
+                            <p className="text-green-100">{msg.user}</p>
+                            <span className="block text-xs text-green-500 mt-1">{msg.time}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
