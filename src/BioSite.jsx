@@ -81,16 +81,12 @@ export default function BioSite() {
 
       if (isAdmin && adminPanelOpen) {
   messages.forEach((msg) => {
-    if (!msg.seenByAdmin) {
-      const docRef = doc(db, "chat", msg.id);
-      updateDoc(docRef, { seenByAdmin: true });
-    }
-    // Mark user messages as seen by admin
-    if (msg.userName !== "Abdallah" && !msg.seenByAdmin) {
+    if (!msg.seenByAdmin && msg.userName !== "Abdallah") {
       const docRef = doc(db, "chat", msg.id);
       updateDoc(docRef, { seenByAdmin: true });
     }
   });
+});
 }
           }
         });
