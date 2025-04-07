@@ -59,6 +59,7 @@ export default function BioSite() {
     return generated;
   });
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("isAdmin") === "true");
+  const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const inputRef = useRef(null);
   const outputRef = useRef(null);
 
@@ -231,46 +232,56 @@ export default function BioSite() {
 
         {isAdmin && (
           <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-green-900 text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
-            <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
-            <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
-            <textarea
-              placeholder="Type your message as admin..."
-              className="w-full bg-black border border-green-600 text-green-200 p-2 rounded mb-2 resize-none text-sm sm:text-base"
-              rows={3}
-              onKeyDown={async (e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  const adminMessage = e.target.value.trim();
-                  if (!adminMessage) return;
-                  const time = new Date().toLocaleTimeString();
-                  await addDoc(chatCollection, {
-                    user: adminMessage,
-                    userName: "Abdallah",
-                    time,
-                    timestamp: serverTimestamp()
-                  });
-                  e.target.value = "";
+            <button
+              className="sm:hidden block mb-2 text-green-400 underline"
+              onClick={() => setAdminPanelOpen(!adminPanelOpen)}
+            >
+              {adminPanelOpen ? "Hide Admin Panel" : "Show Admin Panel"}
+            </button>
+            {(adminPanelOpen || window.innerWidth >= 640) && (
+              <div>
+                <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
+                <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
+                <textarea
+                  placeholder="Type your message as admin..."
+                  className="w-full bg-black border border-green-600 text-green-200 p-2 rounded mb-2 resize-none text-sm sm:text-base"
+                  rows={3}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      const adminMessage = e.target.value.trim();
+                      if (!adminMessage) return;
+                      const time = new Date().toLocaleTimeString();
+                      await addDoc(chatCollection, {
+                        user: adminMessage,
+                        userName: "Abdallah",
+                        time,
+                        timestamp: serverTimestamp()
+                      });
+                      e.target.value = "";
 
-                  try {
-                    await emailjs.send("service_2fdtfyg", "template_btw21b8", {
-                      user_name: "Abdallah",
-                      message: adminMessage,
-                      to_email: "abdallahelabd05@gmail.com"
-                    }, "vhPVKbLsc89CisiWl");
-                  } catch (error) {
-                    console.error("Email failed:", error);
-                  }
-                }
-              }}
-            />
-            <h3 className="text-green-300 text-sm mb-2 font-bold">User Messages</h3>
-            <ul className="space-y-1 text-sm">
-              {chatLog.map((log, index) => (
-                <li key={index} className="text-green-100 border-b border-green-700 pb-1">
-                  👤 {log.userName}: {log.user} <span className="text-xs text-green-400">({log.time})</span>
-                </li>
-              ))}
-            </ul>
+                      try {
+                        await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+                          user_name: "Abdallah",
+                          message: adminMessage,
+                          to_email: "abdallahelabd05@gmail.com"
+                        }, "vhPVKbLsc89CisiWl");
+                      } catch (error) {
+                        console.error("Email failed:", error);
+                      }
+                    }
+                  }}
+                />
+                <h3 className="text-green-300 text-sm mb-2 font-bold">User Messages</h3>
+                <ul className="space-y-1 text-sm">
+                  {chatLog.map((log, index) => (
+                    <li key={index} className="text-green-100 border-b border-green-700 pb-1">
+                      👤 {log.userName}: {log.user} <span className="text-xs text-green-400">({log.time})</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </section>
