@@ -3,8 +3,20 @@ import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  onSnapshot,
+  serverTimestamp,
+  query,
+  orderBy,
+  doc,
+  updateDoc,
+  deleteDoc
+} from "firebase/firestore";
 
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCvJp9MjJ3CJGDcM1dj2U0LYBCtdc5BBmk",
   authDomain: "abdallahbio-18d4c.firebaseapp.com",
@@ -16,12 +28,15 @@ const firebaseConfig = {
   measurementId: "G-GYD479RY6M"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const chatCollection = collection(db, "chat");
 
+// Pinned command list
 const pinnedCommands = ["hello", "experience", "skills", "chat"];
 
+// PinnedCommands component
 function PinnedCommands({ setCommand, inputRef }) {
   return (
     <div className="mt-10 border border-green-700 p-4 rounded-xl bg-green-900/10 backdrop-blur-md">
@@ -38,7 +53,7 @@ function PinnedCommands({ setCommand, inputRef }) {
           >
             {cmd}
           </button>
-        )}
+        ))}
       </div>
     </div>
   );
