@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, updateDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCvJp9MjJ3CJGDcM1dj2U0LYBCtdc5BBmk",
