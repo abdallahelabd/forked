@@ -112,7 +112,7 @@ export default function BioSite() {
         log.recipient === userName
       )
       .map(log => {
-        const reaction = log.reaction ? ` <span class='ml-2'>${log.reaction}</span>` : "";
+        const reaction = log.reaction ? `<motion.span initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 10 }} class='inline-block ml-2'>${log.reaction}</motion.span>` : "";
         const userLine = log.userName === "Abdallah"
           ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
           : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
@@ -260,25 +260,45 @@ export default function BioSite() {
             <div ref={outputRef} />
 
               {chatLog
-                .filter(msg => msg.userName === userName || msg.recipient === userName)
+                .filter(msg => (msg.userName === userName || msg.recipient === userName) && msg.userName !== userName)
                 .map((msg, idx) => (
                   <div key={msg.id || idx} className="mt-2">
                     <div className="text-sm text-green-200">{msg.userName === userName ? 'You' : msg.userName}: {msg.user}</div>
-                    <div className="flex gap-2 mt-1">
-                      {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={async () => {
-                            const docRef = doc(db, 'chat', msg.id);
-                            const currentReaction = msg.reaction || "";
-                            await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
-                          }}
-                          className="text-sm hover:scale-110 transition-transform"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
+                    {msg.userName !== userName && (
+  <div className="flex gap-1 mt-1 items-center">
+    <button
+      className="text-xs bg-green-700 px-2 py-0.5 rounded hover:bg-green-600"
+      onClick={(e) => {
+        e.stopPropagation();
+        const popup = document.getElementById(`react-${msg.id}`);
+        if (popup) popup.classList.toggle("hidden");
+      }}
+    >
+      😊
+    </button>
+    <motion.div
+      id={`react-${msg.id}`}
+      className="hidden gap-1"
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+    >
+      {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+        <button
+          key={emoji}
+          onClick={async () => {
+            const docRef = doc(db, 'chat', msg.id);
+            const currentReaction = msg.reaction || "";
+            await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
+          }}
+          className="text-sm hover:scale-110 transition-transform"
+        >
+          {emoji}
+        </button>
+      ))}
+    </motion.div>
+  </div>
+)}
                   </div>
               ))}
           </div>
