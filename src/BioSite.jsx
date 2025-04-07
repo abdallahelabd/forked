@@ -365,7 +365,7 @@ export default function BioSite() {
   <span className="block text-[10px] text-green-400 mt-0.5">
     {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
   </span>
-) }
+)
                           </li>
                         ))}
                       </ul>
