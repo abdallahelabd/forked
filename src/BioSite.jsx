@@ -121,6 +121,7 @@ export default function BioSite() {
     setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
   });
 
+  // Clean unsubscribe call
   return () => unsubscribe();
 }, [isAdmin, userName, adminPanelOpen]);
 
