@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, updateDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCvJp9MjJ3CJGDcM1dj2U0LYBCtdc5BBmk",
@@ -82,7 +82,7 @@ export default function BioSite() {
         .filter(log => isAdmin || log.userName === userName || (log.userName === "Abdallah" && log.recipient === userName))
         .map(log => {
           const userLine = log.userName === "Abdallah"
-            ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
+            ? `<span class='text-yellow-400'>🦅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
             : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400 transition-opacity duration-500'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400 transition-opacity duration-500 animate-pulse'>✓</span>" : ""}`;
           return userLine;
         });
@@ -124,10 +124,13 @@ export default function BioSite() {
           console.error("❌ Failed to write message to Firestore:", err);
         }
         try {
-          await emailjs.send("service_2fdtfyg", "template_btw21b8", {
-            user_name: userName,
-            message: trimmed
-          }, "vhPVKbLsc89CisiWl");
+          if (userName !== "Abdallah") {
+  await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+    user_name: userName,
+    message,
+    to_email: "abdallahelabd05@gmail.com"
+  }, "vhPVKbLsc89CisiWl");
+}
         } catch (error) {
           console.error("❌ Email failed:", error);
         }
@@ -157,7 +160,8 @@ export default function BioSite() {
         if (args[0] === "1234") {
           setIsAdmin(true);
           localStorage.setItem("isAdmin", "true");
-          setStaticOutput((prev) => [...prev, `$ ${command}`, "✅ Admin access granted."]);
+          setAdminPanelOpen(true);
+          setStaticOutput((prev) => [...prev, `$ ${command}`]);
         } else {
           setStaticOutput((prev) => [...prev, `$ ${command}`, "❌ Incorrect passcode."]);
         }
@@ -328,7 +332,7 @@ export default function BioSite() {
     🗑 Delete
   </button>
 )}
-                            <span className="block text-xs text-green-500 mt-1\">{msg.time}</span>
+                            <span className="block text-xs text-green-500 mt-1">{msg.time}</span>
 {msg.userName === "Abdallah" && (
   <span className="block text-[10px] text-green-400 mt-0.5">
     {msg.seenByAdmin ? "Seen ✓✓" : "Sent ✓"}
