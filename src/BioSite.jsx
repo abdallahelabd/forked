@@ -105,7 +105,6 @@ export default function BioSite() {
         });
     }
       });
-  
     const outputLines = messages
       .filter(log =>
         isAdmin ||
