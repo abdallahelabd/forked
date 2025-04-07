@@ -2,16 +2,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
-import { db } from "./firebase";
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  serverTimestamp,
-  query,
-  orderBy
-} from "firebase/firestore";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "firebase/firestore";
 
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCvJp9MjJ3CJGDcM1dj2U0LYBCtdc5BBmk",
+  authDomain: "abdallahbio-18d4c.firebaseapp.com",
+  databaseURL: "https://abdallahbio-18d4c-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "abdallahbio-18d4c",
+  storageBucket: "abdallahbio-18d4c.firebasestorage.app",
+  messagingSenderId: "1059962976137",
+  appId: "1:1059962976137:web:5e60b5af318796e4b35358",
+  measurementId: "G-GYD479RY6M"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 const chatCollection = collection(db, "chat");
 
 const pinnedCommands = ["hello", "experience", "skills", "chat"];
@@ -63,7 +71,7 @@ export default function BioSite() {
       setChatLog(messages);
       const outputLines = messages.map(log => {
         const userLine = log.userName === "Abdallah"
-          ? `<span class='text-yellow-400'>🧕 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
+          ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
           : `👤 ${log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>`;
         return userLine;
       });
