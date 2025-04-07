@@ -92,7 +92,12 @@ export default function BioSite() {
     }
 
     const outputLines = messages
-      .filter(log => isAdmin || log.userName === userName || (log.userName === "Abdallah" && log.recipient === userName))
+      .filter(log =>
+  isAdmin ||
+  log.userName === userName || // messages sent by this user
+  log.recipient === userName   // messages sent to this user (including by admin)
+)
+
       .map(log => {
         const userLine = log.userName === "Abdallah"
           ? `🫅 Abdallah: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${isAdmin && log.seenByUser && log.recipient !== 'Abdallah' ? ` <span class='text-blue-400'>✓</span> <span class='text-green-500 text-xs'>(Seen at ${log.seenTime || '✓✓'})</span>` : ""}`
