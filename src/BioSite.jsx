@@ -86,6 +86,7 @@ export default function BioSite() {
       updateDoc(docRef, { seenByAdmin: true });
     }
   });
+});
 }
     }
   });
