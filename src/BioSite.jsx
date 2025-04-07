@@ -121,24 +121,6 @@ export default function BioSite() {
 
     setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
   });
-    
-      });
-
-    // Duplicate block removed below
-    // const outputLines = messages
-      .filter(log =>
-        isAdmin ||
-        log.userName === userName ||
-        log.recipient === userName
-      )
-      .map(log => {
-        const userLine = log.userName === "Abdallah"
-          ? `🫅 Abdallah: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${isAdmin && log.seenByUser && log.recipient !== 'Abdallah' ? ` <span class='text-blue-400'>✓</span> <span class='text-green-500 text-xs'>(Seen at ${log.seenTime || '✓✓'})</span>` : ""}`
-          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}`;
-        return userLine;
-      });
-
-    setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
   });
 
   // Clean unsubscribe call
