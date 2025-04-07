@@ -86,7 +86,7 @@ export default function BioSite() {
 
     if (!isAdmin) {
       messages
-        .filter((msg) => msg.userName === "Abdallah" && msg.recipient === userName && !msg.seenByUser)
+        .filter((msg) => msg.recipient === userName && !msg.seenByUser)
         .forEach((msg) => {
           const docRef = doc(db, "chat", msg.id);
           updateDoc(docRef, {
@@ -96,12 +96,14 @@ export default function BioSite() {
         });
     }
 
-    if (isAdmin && adminPanelOpen) {
-      messages.forEach((msg) => {
-        if (!msg.seenByAdmin && msg.userName !== "Abdallah") {
+    if (isAdmin) {
+      messages
+        .filter((msg) => !msg.seenByAdmin && msg.userName !== "Abdallah")
+        .forEach((msg) => {
           const docRef = doc(db, "chat", msg.id);
           updateDoc(docRef, { seenByAdmin: true });
-        }
+        });
+    }
       });
     }
 
