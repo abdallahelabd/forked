@@ -309,7 +309,7 @@ export default function BioSite() {
                       acc[otherUser].push(msg);
                       return acc;
                     }, {})
-                  ).map(([participant, messages]) => (
+          ).map(([participant, messages]) => (
                     <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
                       <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
 <button
@@ -365,6 +365,7 @@ export default function BioSite() {
   <span className="block text-[10px] text-green-400 mt-0.5">
     {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
   </span>
+)}
 )
                           </li>
                         ))}
