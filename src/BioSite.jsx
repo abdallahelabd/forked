@@ -70,19 +70,16 @@ export default function BioSite() {
     setChatLog(messages);
 
     if (!isAdmin) {
-      messages.forEach((msg) => {
-        if (
-          msg.userName === "Abdallah" &&
-          msg.recipient === userName &&
-          !msg.seenByUser
-        ) {
-          const docRef = doc(db, "chat", msg.id);
-          updateDoc(docRef, {
-            seenByUser: true,
-            seenTime: new Date().toLocaleTimeString()
-          });
-        }
+  messages
+    .filter((msg) => msg.userName === "Abdallah" && msg.recipient === userName && !msg.seenByUser)
+    .forEach((msg) => {
+      const docRef = doc(db, "chat", msg.id);
+      updateDoc(docRef, {
+        seenByUser: true,
+        seenTime: new Date().toLocaleTimeString(),
       });
+    });
+}
     }
 
     if (isAdmin && adminPanelOpen) {
@@ -98,7 +95,7 @@ export default function BioSite() {
       .filter(log => isAdmin || log.userName === userName || (log.userName === "Abdallah" && log.recipient === userName))
       .map(log => {
         const userLine = log.userName === "Abdallah"
-          ? `🫅 Abdallah: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByUser && log.recipient === userName ? ` <span class='text-blue-400'>✓</span> <span class='text-green-500 text-xs'>(Seen at ${log.seenTime || '✓✓'})</span>` : ""}`
+          ? `🫅 Abdallah: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${isAdmin && log.seenByUser && log.recipient !== 'Abdallah' ? ` <span class='text-blue-400'>✓</span> <span class='text-green-500 text-xs'>(Seen at ${log.seenTime || '✓✓'})</span>` : ""}`
           : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}`;
         return userLine;
       });
