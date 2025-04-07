@@ -38,7 +38,7 @@ function PinnedCommands({ setCommand, inputRef }) {
           >
             {cmd}
           </button>
-        ))}
+        )}
       </div>
     </div>
   );
@@ -366,7 +366,6 @@ export default function BioSite() {
     {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
   </span>
 )}
-)
                           </li>
                         ))}
                       </ul>
