@@ -66,14 +66,24 @@ export default function BioSite() {
   useEffect(() => {
     const q = query(chatCollection, orderBy("timestamp"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const messages = snapshot.docs.map(doc => doc.data());
+      const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setChatLog(messages);
+
+      // Mark messages as seen when admin panel is opened
+      if (isAdmin && adminPanelOpen) {
+        messages.forEach((msg) => {
+          if (!msg.seenByAdmin) {
+            const docRef = doc(db, "chat", msg.id);
+            updateDoc(docRef, { seenByAdmin: true });
+          }
+        });
+      }
       const outputLines = messages
         .filter(log => isAdmin || log.userName === userName || log.userName === "Abdallah")
         .map(log => {
           const userLine = log.userName === "Abdallah"
-            ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
-            : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>`;
+  ? `<span class='text-yellow-400'>🫕 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
+  : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400 transition-opacity duration-500'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400 transition-opacity duration-500 animate-pulse'>✓</span>" : ""}`;
           return userLine;
         });
       setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
