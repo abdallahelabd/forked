@@ -124,8 +124,6 @@ export default function BioSite() {
   // Clean unsubscribe call
   return () => unsubscribe();
 }, [isAdmin, userName, adminPanelOpen]);
-
-  return () => unsubscribe();
 }, [isAdmin, userName, adminPanelOpen]);
 
   useEffect(() => {
