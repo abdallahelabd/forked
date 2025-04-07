@@ -81,7 +81,7 @@ export default function BioSite() {
   useEffect(() => {
   const q = query(chatCollection, orderBy("timestamp"));
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data()));
+  const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setChatLog(messages);
 
     if (!isAdmin) {
