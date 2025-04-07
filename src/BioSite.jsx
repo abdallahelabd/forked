@@ -169,8 +169,6 @@ export default function BioSite() {
         setStaticOutput((prev) => [...prev, `$ ${command}`, "🪩 This command no longer clears global chat."]);
         setCommand("");
         return;
-        setCommand("");
-        return;
       case "admin":
         if (args[0] === "1234") {
           setIsAdmin(true);
