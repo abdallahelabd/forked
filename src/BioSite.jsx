@@ -124,11 +124,6 @@ export default function BioSite() {
 
   return () => unsubscribe();
 }, [isAdmin, userName, adminPanelOpen]);
-  });
-
-  // Clean unsubscribe call
-  return () => unsubscribe();
-}, [isAdmin, userName, adminPanelOpen]);
 
   useEffect(() => {
     outputRef.current?.scrollIntoView({ behavior: "smooth" });
