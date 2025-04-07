@@ -82,7 +82,7 @@ export default function BioSite() {
         .filter(log => isAdmin || log.userName === userName || (log.userName === "Abdallah" && log.recipient === userName))
         .map(log => {
           const userLine = log.userName === "Abdallah"
-            ? `<span class='text-yellow-400'> Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
+            ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
             : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400 transition-opacity duration-500'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400 transition-opacity duration-500 animate-pulse'>✓</span>" : ""}`;
           return userLine;
         });
@@ -291,7 +291,7 @@ export default function BioSite() {
                       return acc;
                     }, {})
                   ).map(([participant, messages]) => (
-                    <div key={participant} className="border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md">
+                    <div key={participant} className="border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col">
                       <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
                       <ul className="space-y-2 text-sm">
                         {messages.map((msg, index) => (
@@ -304,7 +304,49 @@ export default function BioSite() {
                           </li>
                         ))}
                       </ul>
-                    </div>
+
+      <form
+        className="mt-3 flex gap-2"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const input = e.target.elements[`reply-${participant}`];
+          const message = input.value.trim();
+          if (!message) return;
+          const time = new Date().toLocaleTimeString();
+          await addDoc(chatCollection, {
+            user: message,
+            recipient: participant,
+            userName: "Abdallah",
+            time,
+            timestamp: serverTimestamp()
+          });
+          input.value = "";
+
+          try {
+            await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+              user_name: "Abdallah",
+              message,
+              to_email: "abdallahelabd05@gmail.com"
+            }, "vhPVKbLsc89CisiWl");
+          } catch (error) {
+            console.error("Email failed:", error);
+          }
+        }}
+      >
+        <input
+          type="text"
+          name={`reply-${participant}`}
+          placeholder={`Reply to ${participant}...`}
+          className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
+        />
+        <button
+          type="submit"
+          className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
+        >
+          Send
+        </button>
+      </form>
+    </div>
                   ))}
                 </div>
               </div>
