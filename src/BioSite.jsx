@@ -363,13 +363,11 @@ export default function BioSite() {
   </button>
 )}
                             <span className="block text-xs text-green-500 mt-1">{msg.time}</span>
-{msg.userName === "Abdallah" && (
-  {isAdmin && (
+{isAdmin && msg.userName === "Abdallah" && (
   <span className="block text-[10px] text-green-400 mt-0.5">
     {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
   </span>
-)}
-)}
+)}}
                           </li>
                         ))}
                       </ul>
