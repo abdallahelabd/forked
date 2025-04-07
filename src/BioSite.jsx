@@ -86,9 +86,8 @@ export default function BioSite() {
   });
 }
       });
-    }
 
-    if (isAdmin && adminPanelOpen) {
+if (isAdmin && adminPanelOpen) {
       messages.forEach((msg) => {
         if (!msg.seenByAdmin && msg.userName !== "Abdallah") {
           const docRef = doc(db, "chat", msg.id);
