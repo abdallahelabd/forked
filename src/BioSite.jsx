@@ -79,10 +79,11 @@ export default function BioSite() {
 ) {
   const docRef = doc(db, "chat", msg.id);
   updateDoc(docRef, {
-    seenByUser: true,
-    seenTime: new Date().toLocaleTimeString()
-  });
+  seenByUser: true,
+  seenTime: new Date().toLocaleTimeString()
 });
+      }
+    });
         }
       });
     }
