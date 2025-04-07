@@ -358,7 +358,7 @@ export default function BioSite() {
       onClick={async () => {
         const docRef = doc(db, 'chat', msg.id);
         const currentReaction = msg.reaction || "";
-        await updateDoc(docRef, { reaction: emoji });
+        await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
       }}
       className="text-sm hover:scale-110 transition-transform"
     >
