@@ -69,16 +69,18 @@ export default function BioSite() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const messages = snapshot.docs.map(doc => doc.data());
       setChatLog(messages);
-      const outputLines = messages.map(log => {
-        const userLine = log.userName === "Abdallah"
-          ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
-          : `👤 ${log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>`;
-        return userLine;
-      });
+      const outputLines = messages
+        .filter(log => isAdmin || log.userName === userName)
+        .map(log => {
+          const userLine = log.userName === "Abdallah"
+            ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
+            : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>`;
+          return userLine;
+        });
       setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
     });
     return () => unsubscribe();
-  }, []);
+  }, [isAdmin, userName]);
 
   useEffect(() => {
     outputRef.current?.scrollIntoView({ behavior: "smooth" });
