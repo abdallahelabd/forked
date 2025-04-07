@@ -284,17 +284,21 @@ export default function BioSite() {
                 />
                 <div className="flex-1 overflow-y-auto space-y-4 mt-3">
                   {Object.entries(
-                    chatLog.reduce((acc, log) => {
-                      if (!acc[log.userName]) acc[log.userName] = [];
-                      acc[log.userName].push(log);
+                    chatLog.reduce((acc, msg) => {
+                      const otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
+                      if (!acc[otherUser]) acc[otherUser] = [];
+                      acc[otherUser].push(msg);
                       return acc;
                     }, {})
-                  ).map(([user, messages]) => (
-                    <div key={user} className="border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md">
-                      <h4 className="font-bold text-green-400 mb-3 text-lg">👤 {user}</h4>
+                  ).map(([participant, messages]) => (
+                    <div key={participant} className="border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md">
+                      <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
                       <ul className="space-y-2 text-sm">
                         {messages.map((msg, index) => (
-                          <li key={index} className="bg-green-900/20 rounded-xl p-3 shadow-inner">
+                          <li
+                            key={index}
+                            className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
+                          >
                             <p className="text-green-100">{msg.user}</p>
                             <span className="block text-xs text-green-500 mt-1">{msg.time}</span>
                           </li>
