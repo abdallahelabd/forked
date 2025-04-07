@@ -1,115 +1,56 @@
-
+/* Firebase-integrated version with real-time global chat */
 import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
+import { db } from "./firebase";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  serverTimestamp,
+  query,
+  orderBy
+} from "firebase/firestore";
 
-const pinnedCommands = ["hello", "experience", "skills", "chat"];
-
-function PinnedCommands({ setCommand, inputRef }) {
-  return (
-    <div className="mt-10 border border-green-700 p-4 rounded-xl bg-green-900/10 backdrop-blur-md">
-      <p className="text-green-300 text-xl mb-3 font-bold underline">Pinned Commands</p>
-      <div className="flex flex-wrap gap-4">
-        {pinnedCommands.map((cmd) => (
-          <button
-            key={cmd}
-            onClick={() => {
-              setCommand(cmd);
-              inputRef.current?.focus();
-            }}
-            className="px-4 py-2 bg-green-500 text-black font-semibold rounded-2xl shadow-md hover:bg-green-400 hover:scale-105 transition-all duration-200"
-          >
-            {cmd}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const AnimatedLine = ({ text, onComplete }) => {
-  const [displayedText, setDisplayedText] = useState("");
-
-  useEffect(() => {
-    if (!text) return;
-    let i = 0;
-    const stripped = text.replace(/<[^>]+>/g, "");
-    const chars = [...stripped];
-    const interval = setInterval(() => {
-      if (i < chars.length) {
-        setDisplayedText((prev) => prev + chars[i]);
-        i++;
-      } else {
-        clearInterval(interval);
-        if (onComplete && typeof text === "string") {
-          setTimeout(() => onComplete(text + ""), 0);
-        }
-      }
-    }, 15);
-    return () => clearInterval(interval);
-  }, [text]);
-
-  const isHtml = /<[^>]+>/.test(text);
-  return isHtml ? (
-    <pre dangerouslySetInnerHTML={{ __html: text }} />
-  ) : (
-    <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
-  );
-};
+const chatCollection = collection(db, "chat");
 
 export default function BioSite() {
-  const [showAdmin, setShowAdmin] = useState(() => window.innerWidth >= 640);
   const [command, setCommand] = useState("");
   const [staticOutput, setStaticOutput] = useState(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05"]);
   const [animatedOutput, setAnimatedOutput] = useState([]);
   const [queuedLines, setQueuedLines] = useState([]);
   const [chatMode, setChatMode] = useState(false);
-  const [chatLog, setChatLog] = useState(() => {
-    const profile = localStorage.getItem("userName") || "User";
-    const stored = localStorage.getItem(localStorage.getItem("isAdmin") === "true" ? "chatLog_global" : `chatLog_${profile}`);
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [chatLog, setChatLog] = useState([]);
   const [userName, setUserName] = useState(() => {
-  const stored = localStorage.getItem("userName");
-  if (stored) return stored;
-  const generated = "User" + Math.floor(Math.random() * 1000);
-  localStorage.setItem("userName", generated);
-  return generated;
-});
+    const stored = localStorage.getItem("userName");
+    if (stored) return stored;
+    const generated = "User" + Math.floor(Math.random() * 1000);
+    localStorage.setItem("userName", generated);
+    return generated;
+  });
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("isAdmin") === "true");
   const inputRef = useRef(null);
   const outputRef = useRef(null);
 
   useEffect(() => {
-    outputRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [staticOutput, animatedOutput]);
+    const q = query(chatCollection, orderBy("timestamp"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const messages = snapshot.docs.map(doc => doc.data());
+      setChatLog(messages);
+      const outputLines = messages.map(log => {
+        const userLine = log.userName === "Abdallah"
+          ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
+          : `👤 ${log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>`;
+        return userLine;
+      });
+      setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
-    if (chatLog.length > 0) {
-      let updated = [...chatLog];
-      if (isAdmin) {
-        updated = chatLog.map(log => {
-          if (!log.seen && log.userName !== "Abdallah") {
-            return { ...log, seen: true };
-          }
-          return log;
-        });
-        setChatLog(updated);
-        localStorage.setItem(isAdmin ? "chatLog_global" : `chatLog_${userName}`, JSON.stringify(updated));
-      }
-      const restored = updated.map((log) => {
-        const isAdminLog = log.userName === "Abdallah";
-        const userLine = log.userName === "Abdallah"
-          ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400 transition-opacity duration-300 animate-pingOnce'>✓</span>`
-          : log.userName === userName && !isAdmin
-            ? `👤 You: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seen ? " <span class='text-blue-400 transition-opacity duration-300 animate-pingOnce'>✓</span>" : ""}`
-            : `👤 You: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seen ? " <span class='text-blue-400'>✓</span>" : ""}`;
-        const replyLines = (log.replies || []).map(reply => reply);
-        return [userLine, ...replyLines];
-      }).flat();
-      setStaticOutput((prev) => [...prev, ...restored]);
-    }
-  }, []);
+    outputRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [staticOutput, animatedOutput]);
 
   useEffect(() => {
     if (queuedLines.length > 0 && animatedOutput.length === 0) {
@@ -128,29 +69,20 @@ export default function BioSite() {
     if (chatMode && trimmed !== "exit") {
       if (!isAdmin) {
         const time = new Date().toLocaleTimeString();
-        const label = `👤 You`;
-        let message = `${label}: ${trimmed} (${time})`;
-        const updatedChat = [...chatLog, { user: trimmed, userName, time, replies: [], seen: false }];
-        setChatLog(updatedChat);
-        localStorage.setItem(isAdmin ? "chatLog_global" : `chatLog_${userName}`, JSON.stringify(updatedChat));
-        setStaticOutput((prev) => [...prev, message]);
+        const newMsg = {
+          user: trimmed,
+          userName,
+          time,
+          timestamp: serverTimestamp()
+        };
+        await addDoc(chatCollection, newMsg);
         try {
-          const response = await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+          await emailjs.send("service_2fdtfyg", "template_btw21b8", {
             user_name: userName,
             message: trimmed
           }, "vhPVKbLsc89CisiWl");
-
-          console.log("📬 EmailJS response:", response);
-
-          if (response.status === 200) {
-            const successMessage = `${label}: ${trimmed} (${time}) <span class='text-blue-400'>✓</span>`;
-            setStaticOutput((prev) => [...prev.slice(0, -1), successMessage]);
-          } else {
-            setStaticOutput((prev) => [...prev, `⚠️ Email service returned: ${response.text}`]);
-          }
         } catch (error) {
           console.error("❌ Email failed:", error);
-          setStaticOutput((prev) => [...prev, `❌ Email failed: ${error.text || error.message}`]);
         }
       } else {
         setStaticOutput((prev) => [...prev, "❌ Admins must reply using the panel."]);
@@ -169,9 +101,7 @@ export default function BioSite() {
     let result = [];
     switch (baseCmd) {
       case "clear":
-        setChatLog([]);
-        localStorage.removeItem(isAdmin ? "chatLog_global" : `chatLog_${userName}`);
-        setStaticOutput((prev) => [...prev, `$ ${command}`, "🧹 Chat history cleared."]);
+        setStaticOutput((prev) => [...prev, `$ ${command}`, "🧹 This command no longer clears global chat."]);
         setCommand("");
         return;
       case "admin":
@@ -258,21 +188,10 @@ export default function BioSite() {
               autoFocus
             />
           </div>
-
-          <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
         </motion.div>
 
         {isAdmin && (
-          <>
-            <button
-  onClick={() => setShowAdmin((prev) => !prev)}
-  className="fixed bottom-4 right-4 z-50 block sm:hidden bg-green-800 text-white px-4 py-2 rounded shadow-md"
->
-  {showAdmin ? "Hide Panel" : "Admin Panel"}
-</button>
-
-            {showAdmin && (
-              <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-green-900 text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
+          <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-green-900 text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
             <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
             <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
             <textarea
@@ -284,21 +203,13 @@ export default function BioSite() {
                   e.preventDefault();
                   const adminMessage = e.target.value.trim();
                   if (!adminMessage) return;
-
                   const time = new Date().toLocaleTimeString();
-                  const newEntry = {
+                  await addDoc(chatCollection, {
                     user: adminMessage,
                     userName: "Abdallah",
                     time,
-                    replies: []
-                  };
-
-                  const updatedLog = [...chatLog, newEntry];
-                  setChatLog(updatedLog);
-                  localStorage.setItem("chatLog_global", JSON.stringify(updatedLog));
-
-                  const displayMsg = `<span class='text-yellow-400'>🫅 Abdallah</span>: ${adminMessage} (${time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`;
-                  setStaticOutput((prev) => [...prev, displayMsg]);
+                    timestamp: serverTimestamp()
+                  });
                   e.target.value = "";
 
                   try {
@@ -321,11 +232,39 @@ export default function BioSite() {
                 </li>
               ))}
             </ul>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </section>
     </main>
   );
 }
+
+const AnimatedLine = ({ text, onComplete }) => {
+  const [displayedText, setDisplayedText] = useState("");
+
+  useEffect(() => {
+    if (!text) return;
+    let i = 0;
+    const stripped = text.replace(/<[^>]+>/g, "");
+    const chars = [...stripped];
+    const interval = setInterval(() => {
+      if (i < chars.length) {
+        setDisplayedText((prev) => prev + chars[i]);
+        i++;
+      } else {
+        clearInterval(interval);
+        if (onComplete && typeof text === "string") {
+          setTimeout(() => onComplete(text + ""), 0);
+        }
+      }
+    }, 15);
+    return () => clearInterval(interval);
+  }, [text]);
+
+  const isHtml = /<[^>]+>/.test(text);
+  return isHtml ? (
+    <pre dangerouslySetInnerHTML={{ __html: text }} />
+  ) : (
+    <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
+  );
+};;
