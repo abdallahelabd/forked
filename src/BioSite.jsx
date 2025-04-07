@@ -328,7 +328,7 @@ export default function BioSite() {
     🗑 Delete
   </button>
 )}
-                            <span className=\"block text-xs text-green-500 mt-1\">{msg.time}</span>
+                            <span className="block text-xs text-green-500 mt-1\">{msg.time}</span>
 {msg.userName === "Abdallah" && (
   <span className="block text-[10px] text-green-400 mt-0.5">
     {msg.seenByAdmin ? "Seen ✓✓" : "Sent ✓"}
