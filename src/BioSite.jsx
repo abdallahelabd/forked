@@ -63,7 +63,7 @@ export default function BioSite() {
       setChatLog(messages);
       const outputLines = messages.map(log => {
         const userLine = log.userName === "Abdallah"
-          ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
+          ? `<span class='text-yellow-400'>🧕 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
           : `👤 ${log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>`;
         return userLine;
       });
@@ -293,4 +293,4 @@ const AnimatedLine = ({ text, onComplete }) => {
   ) : (
     <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
   );
-};;
+};
