@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "firebase/firestore";
+import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, updateDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCvJp9MjJ3CJGDcM1dj2U0LYBCtdc5BBmk",
@@ -69,7 +69,6 @@ export default function BioSite() {
       const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setChatLog(messages);
 
-      // Mark messages as seen when admin panel is opened
       if (isAdmin && adminPanelOpen) {
         messages.forEach((msg) => {
           if (!msg.seenByAdmin) {
@@ -78,12 +77,13 @@ export default function BioSite() {
           }
         });
       }
+
       const outputLines = messages
         .filter(log => isAdmin || log.userName === userName || (log.userName === "Abdallah" && log.recipient === userName))
         .map(log => {
           const userLine = log.userName === "Abdallah"
-  ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
-  : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400 transition-opacity duration-500'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400 transition-opacity duration-500 animate-pulse'>✓</span>" : ""}`;
+            ? `<span class='text-yellow-400'>🫅 Abdallah</span>: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span> <span class='text-blue-400'>✓</span>`
+            : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400 transition-opacity duration-500'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400 transition-opacity duration-500 animate-pulse'>✓</span>" : ""}`;
           return userLine;
         });
       setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
@@ -149,7 +149,7 @@ export default function BioSite() {
     let result = [];
     switch (baseCmd) {
       case "clear":
-        setStaticOutput((prev) => [...prev, `$ ${command}`, "🧹 This command no longer clears global chat."]);
+        setStaticOutput((prev) => [...prev, `$ ${command}`, "🪩 This command no longer clears global chat."]);
         setCommand("");
         return;
       case "admin":
@@ -241,20 +241,20 @@ export default function BioSite() {
         </motion.div>
 
         {isAdmin && (
-          <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-green-900 text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
+          <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-white text-black rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50 border border-green-700">
             <button
-              className="sm:hidden block mb-2 text-green-400 underline"
+              className="sm:hidden block mb-2 p-2 text-green-700 font-semibold"
               onClick={() => setAdminPanelOpen(!adminPanelOpen)}
             >
               {adminPanelOpen ? "Hide Admin Panel" : "Show Admin Panel"}
             </button>
             {(adminPanelOpen || window.innerWidth >= 640) && (
-              <div>
-                <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
-                <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
+              <div className="flex flex-col h-full p-4">
+                <h2 className="font-bold text-lg mb-2 text-green-800">Admin Panel</h2>
+                <p className="mb-3 text-sm text-gray-600">Type <code>logout</code> to exit admin mode.</p>
                 <textarea
                   placeholder="Type your message as admin..."
-                  className="w-full bg-black border border-green-600 text-green-200 p-2 rounded mb-2 resize-none text-sm sm:text-base"
+                  className="w-full bg-gray-100 border border-green-600 text-black p-2 rounded mb-2 resize-none text-sm sm:text-base"
                   rows={3}
                   onKeyDown={async (e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -263,8 +263,8 @@ export default function BioSite() {
                       if (!adminMessage) return;
                       const time = new Date().toLocaleTimeString();
                       await addDoc(chatCollection, {
-          user: adminMessage,
-          recipient: userName,
+                        user: adminMessage,
+                        recipient: userName,
                         userName: "Abdallah",
                         time,
                         timestamp: serverTimestamp()
@@ -283,14 +283,18 @@ export default function BioSite() {
                     }
                   }}
                 />
-                <h3 className="text-green-300 text-sm mb-2 font-bold">User Messages</h3>
-                <ul className="space-y-1 text-sm">
-                  {chatLog.map((log, index) => (
-                    <li key={index} className="text-green-100 border-b border-green-700 pb-1">
-                      👤 {log.userName}: {log.user} <span className="text-xs text-green-400">({log.time})</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="bg-gray-100 rounded p-3 flex-1 overflow-y-auto">
+                  <h3 className="text-green-700 text-sm mb-2 font-bold">User Messages</h3>
+                  <ul className="space-y-2 text-sm">
+                    {chatLog.map((log, index) => (
+                      <li key={index} className="p-2 bg-white border border-gray-300 rounded shadow-sm">
+                        <span className="font-semibold text-green-800">👤 {log.userName}</span>
+                        <span className="block text-gray-800 mt-1">{log.user}</span>
+                        <span className="block text-xs text-gray-500 mt-1">{log.time}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </div>
