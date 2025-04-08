@@ -255,8 +255,8 @@ export default function BioSite() {
           )}
           <div className="space-y-3">
             {/* Terminal Output Panel with custom styling */}
-            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20">
-  <pre className="text-green-300 mb-2 text-center sm:text-left text-sm sm:text-base">Abdallah Elabd 💚</pre>
+            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
+  <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
 <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
   {staticOutput.map((line, idx) => (
     line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
