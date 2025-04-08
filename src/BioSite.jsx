@@ -309,10 +309,10 @@ if (popup) popup.classList.add("hidden");
       >
         {emoji}
       </button>
-    )
+    ))}
   </motion.div>
 </div>
-)}
+
                   </div>
               ))}
           </div>
