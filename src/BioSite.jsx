@@ -118,7 +118,7 @@ export default function BioSite() {
 
         const userLine = log.userName === "Abdallah"
           ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
-          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
+          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}` <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
 
         return userLine;
       });
@@ -267,44 +267,51 @@ export default function BioSite() {
                 .filter(msg => (msg.userName === userName || msg.recipient === userName) && msg.userName !== userName)
                 .map((msg, idx) => (
                   <div key={msg.id || idx} className="mt-2">
-                    <div className="text-sm text-green-200">{msg.userName === userName ? 'You' : msg.userName}: {msg.user}</div>
-                    {msg.userName !== userName && (
-  <div className="flex gap-1 mt-1 items-center">
-    <motion.button
-      whileHover={{ scale: 1.25, rotate: 5 }}
-      whileTap={{ scale: 0.95 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-      className="text-xs bg-gradient-to-br from-green-600 to-green-800 px-2 py-0.5 rounded-full hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-      onClick={(e) => {
-        e.stopPropagation();
-        const popup = document.getElementById(`react-${msg.id}`);
-        if (popup) popup.classList.toggle("hidden");
-      }}
-    >
-      <span role="img" aria-label="react" className="block">😊</span>
-    </motion.button>
-    <motion.div
-      id={`react-${msg.id}`}
-      className="hidden gap-1"
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: 'spring', stiffness: 200, damping: 10 }}
-    >
-      {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-        <button
-          key={emoji}
-          onClick={async () => {
-            const docRef = doc(db, 'chat', msg.id);
-            const currentReaction = msg.reaction || "";
-            await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
-          }}
-          className="text-sm hover:scale-110 transition-transform"
-        >
-          {emoji}
-        </button>
-      ))}
-    </motion.div>
+                    <div className="flex items-center gap-2 mt-2">
+  <div className="text-sm text-green-200">
+    {msg.userName === userName ? 'You' : msg.userName}: {msg.user}
   </div>
+  <motion.button
+    whileHover={{ scale: 1.25, rotate: 5 }}
+    whileTap={{ scale: 0.95 }}
+    transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+    className="text-xs bg-gradient-to-br from-green-600 to-green-800 px-2 py-0.5 rounded-full hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+    onClick={(e) => {
+      e.stopPropagation();
+      const popup = document.getElementById(`react-${msg.id}`);
+      if (popup) popup.classList.toggle("hidden");
+    }}
+  >
+    <span role="img" aria-label="react" className="block">😊</span>
+  </motion.button>
+  <motion.div
+    id={`react-${msg.id}`}
+    className="hidden gap-1 mt-1 bg-green-900/80 p-2 rounded-xl shadow-xl border border-green-600 absolute z-50"
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.8 }}
+    transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+  >
+    {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+      <button
+        key={emoji}
+        onClick={async () => {
+          const docRef = doc(db, 'chat', msg.id);
+          const currentReaction = msg.reaction || "";
+          await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
+const popup = document.getElementById(`react-${msg.id}`);
+if (popup) popup.classList.add("hidden");
+        }}
+        className="text-sm hover:scale-110 transition-transform"
+      >
+        {emoji}
+      </button>
+    ))}
+  </motion.div>
+</div>
 )}
                   </div>
               ))}
