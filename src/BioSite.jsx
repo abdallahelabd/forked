@@ -265,15 +265,7 @@ export default function BioSite() {
               />
             ))}
             <div ref={outputRef} />
-        }}
-        className="text-sm hover:scale-110 transition-transform"
-      >
-        {emoji}
-      </button>
-    ))}
-  </motion.div>
-</div>
-)}
+        
                   </div>
               ))}
           </div>
