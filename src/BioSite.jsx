@@ -266,7 +266,7 @@ export default function BioSite() {
               {chatLog
                 .filter(msg => (msg.userName === userName || msg.recipient === userName) && msg.userName !== userName)
                 .map((msg, idx) => (
-                  <div key={msg.id || idx} className="mt-2">
+                  // <div key={msg.id || idx} className="mt-2">
                    <div className="relative flex items-center gap-2 mt-2">
   <div className="text-sm text-green-200">
     {msg.userName === userName ? 'You' : msg.userName}: {msg.user}
