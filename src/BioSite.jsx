@@ -255,9 +255,11 @@ export default function BioSite() {
           )}
           <div className="space-y-3">
             {/* Terminal Output Panel with custom styling */}
-            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
+            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto">
   <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
-<pre className="text-green-300">Twitter: @abdallahelabd05</pre>
+  <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
+</div>
+<div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
   {staticOutput.map((line, idx) => (
     line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
       <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
@@ -274,7 +276,7 @@ export default function BioSite() {
     />
   ))}
 </div>
-            <hr className="border-t border-green-700 my-6" />
+            
             {chatMode && (
   <>
     <p className="text-green-400 font-bold text-sm">💬 Chat</p>
