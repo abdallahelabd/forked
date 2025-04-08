@@ -266,7 +266,8 @@ export default function BioSite() {
     whileHover={{ scale: 1.2 }}
     title={`Reaction: ${log.reaction}`}
     className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
-    {log.reaction}
+  >
+  {log.reaction}
   </motion.span>)}
                   </p>
                   <motion.button
