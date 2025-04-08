@@ -255,7 +255,9 @@ export default function BioSite() {
                     <span className="text-xs text-green-400 ml-2">({log.time})</span>
                     {log.reaction && <span className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm animate-bounce shadow-md">{log.reaction}</span>}
                   </p>
-                  <button
+                  <motion.button
+  whileTap={{ scale: 0.9 }}
+  whileHover={{ scale: 1.1 }}
   onClick={() => {
     const id = `react-${log.id}`;
     const el = document.getElementById(id);
@@ -263,8 +265,8 @@ export default function BioSite() {
   }}
   className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
 >
-  👍
-</button>
+  {log.reaction ? "❌" : "👍"}
+</motion.button>
 <div id={`react-${log.id}`} className="hidden flex gap-2 mt-1">
   {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
     <button
