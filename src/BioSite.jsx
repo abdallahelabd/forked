@@ -263,17 +263,10 @@ export default function BioSite() {
     transition={{ type: 'spring', stiffness: 400 }}
     whileHover={{ scale: 1.2 }}
     title={`Reaction: ${log.reaction}`}
-  >
-  <motion.span
-    key={log.reaction}
-    initial={{ scale: 0.5, opacity: 0 }}
-    animate={{ scale: 1, opacity: 1 }}
-    transition={{ type: 'spring', stiffness: 500 }}
     className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md"
   >
     {log.reaction}
-  </motion.div>
-)}
+  </motion.div>)}
                   </p>
                   <motion.button
   whileTap={{ scale: 0.9 }}
