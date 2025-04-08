@@ -361,7 +361,7 @@ export default function BioSite() {
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCommand()}
               className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-              placeholder="type a command..." title="Enter a terminal-style command"
+              placeholder={chatMode ? "type your message..." : "type a command..."} title={chatMode ? "Enter your chat message" : "Enter a terminal-style command"}
               autoFocus
             />
           </div>
