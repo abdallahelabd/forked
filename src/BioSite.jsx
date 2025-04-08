@@ -46,10 +46,9 @@ function PinnedCommands({ setCommand, inputRef }) {
           <button
             key={cmd}
             onClick={() => {
-              setCommand(cmd);
-              
-      inputRef.current?.focus();
-    }},
+  setCommand(cmd);
+  inputRef.current?.focus();
+}},
     className="px-4 py-2 bg-green-500 text-black font-semibold rounded-2xl shadow-md hover:bg-green-400 hover:scale-105 transition-all duration-200"
   >
     {cmd}
@@ -269,8 +268,6 @@ export default function BioSite() {
 <div ref={outputRef} />
         
                   </div>
-              ))}
-          </div>
 
           <div className="mt-6 flex items-center gap-2">
             <span className="text-green-500">$</span>
