@@ -115,6 +115,11 @@ export default function BioSite() {
         const reaction = log.reaction
           ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-xs animate-bounce shadow-md'>${log.reaction}</span>`
           : "";
+
+        const userLine = log.userName === "Abdallah"
+          ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
+          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time})${reaction}`;
+
         return userLine;
       });
 
