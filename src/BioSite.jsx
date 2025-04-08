@@ -272,8 +272,6 @@ export default function BioSite() {
     {msg.userName === userName ? 'You' : msg.userName}: {msg.user}
   </div>
   <motion.button
-    whileHover={{ scale: 1.25, rotate: 5 }}
-    whileTap={{ scale: 0.95 }}
     initial={{ opacity: 0, scale: 0.8 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.8 }}
