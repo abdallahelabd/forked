@@ -248,7 +248,7 @@ export default function BioSite() {
   };
 
   return (
-    <> 
+    <>
       <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-16 font-mono relative overflow-hidden">
       <section className="max-w-6xl mx-auto text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
@@ -453,7 +453,7 @@ export default function BioSite() {
           </div>
         )}
       </section>
-      </main>
+            </main>
     </>
   );
 }
