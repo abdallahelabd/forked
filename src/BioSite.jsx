@@ -54,9 +54,11 @@ function PinnedCommands({ setCommand, inputRef }) {
     {cmd}
   </button>
 ))}
-    </div>
-  );
+      </div> {/* Closes the flex container */}
+    </div>   {/* Closes the outer box */}
+  );        {/* Closes the return */}
 }
+
 
 export default function BioSite() {
   const [command, setCommand] = useState("");
