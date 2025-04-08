@@ -1,4 +1,5 @@
 // Firebase-integrated version with real-time global chat
+
 import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
@@ -28,16 +29,12 @@ const firebaseConfig = {
   measurementId: "G-GYD479RY6M"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const chatCollection = collection(db, "chat");
 
-// Pinned command list
-const pinnedCommands = ["hello", "experience", "skills", "chat"];
-
-// PinnedCommands component
 function PinnedCommands({ setCommand, inputRef }) {
+  const pinnedCommands = ["hello", "experience", "skills", "chat"];
   return (
     <div className="mt-10 border border-green-700 p-4 rounded-xl bg-green-900/10 backdrop-blur-md">
       <p className="text-green-300 text-xl mb-3 font-bold underline">Pinned Commands</p>
@@ -79,55 +76,47 @@ export default function BioSite() {
   const outputRef = useRef(null);
 
   useEffect(() => {
-  const q = query(chatCollection, orderBy("timestamp"));
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setChatLog(messages);
+    const q = query(chatCollection, orderBy("timestamp"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setChatLog(messages);
 
-    if (!isAdmin) {
-      messages
-        .filter((msg) => msg.recipient === userName && !msg.seenByUser)
-        .forEach((msg) => {
-          const docRef = doc(db, "chat", msg.id);
-          updateDoc(docRef, {
-            seenByUser: true,
-            seenTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+      if (!isAdmin) {
+        messages
+          .filter((msg) => msg.recipient === userName && !msg.seenByUser)
+          .forEach((msg) => {
+            const docRef = doc(db, "chat", msg.id);
+            updateDoc(docRef, {
+              seenByUser: true,
+              seenTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+            });
           });
+      }
+
+      if (isAdmin) {
+        messages
+          .filter((msg) => !msg.seenByAdmin && msg.userName !== "Abdallah")
+          .forEach((msg) => {
+            const docRef = doc(db, "chat", msg.id);
+            updateDoc(docRef, { seenByAdmin: true });
+          });
+      }
+
+      const outputLines = messages
+        .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
+        .map(log => {
+          const reaction = log.reaction ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-xs animate-bounce shadow-md'>${log.reaction}</span>` : "";
+          const userLine = log.userName === "Abdallah"
+            ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
+            : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
+          return userLine;
         });
-    }
 
-    if (isAdmin) {
-      messages
-        .filter((msg) => !msg.seenByAdmin && msg.userName !== "Abdallah")
-        .forEach((msg) => {
-          const docRef = doc(db, "chat", msg.id);
-          updateDoc(docRef, { seenByAdmin: true });
-        });
-    }
+      setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
+    });
 
-    const outputLines = messages
-      .filter(log =>
-        isAdmin ||
-        log.userName === userName ||
-        log.recipient === userName
-      )
-      .map(log => {
-        const reaction = log.reaction
-          ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-xs animate-bounce shadow-md'>${log.reaction}</span>`
-          : "";
-
-        const userLine = log.userName === "Abdallah"
-          ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
-          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
-
-        return userLine;
-      });
-
-    setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
-  });
-
-  return () => unsubscribe();
-}, [isAdmin, userName, adminPanelOpen]);
+    return () => unsubscribe();
+  }, [isAdmin, userName, adminPanelOpen]);
 
   useEffect(() => {
     outputRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -163,12 +152,12 @@ export default function BioSite() {
         }
         try {
           if (userName !== "Abdallah") {
-  await emailjs.send("service_2fdtfyg", "template_btw21b8", {
-    user_name: userName,
-    message: trimmed,
-    to_email: "abdallahelabd05@gmail.com"
-  }, "vhPVKbLsc89CisiWl");
-}
+            await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+              user_name: userName,
+              message: trimmed,
+              to_email: "abdallahelabd05@gmail.com"
+            }, "vhPVKbLsc89CisiWl");
+          }
         } catch (error) {
           console.error("❌ Email failed:", error);
         }
@@ -262,57 +251,6 @@ export default function BioSite() {
               />
             ))}
             <div ref={outputRef} />
-
-             {chatLog
-  .filter(msg => (msg.userName === userName || msg.recipient === userName) && msg.userName !== userName)
-  .map((msg, idx) => (
-    <div key={msg.id || idx} className="relative flex items-center gap-2 mt-2 text-sm text-green-200">
-      <span>
-        {msg.userName === userName ? 'You' : msg.userName}: {msg.user}
-        {msg.reaction && (
-          <span className="ml-2">{msg.reaction}</span>
-        )}
-      </span>
-
-      <motion.button
-        whileHover={{ scale: 1.25, rotate: 5 }}
-        whileTap={{ scale: 0.95 }}
-        className="ml-2 text-xs bg-green-700 px-1.5 py-0.5 rounded-full hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-        onClick={(e) => {
-          e.stopPropagation();
-          const popup = document.getElementById(`react-${msg.id}`);
-          if (popup) popup.classList.toggle("hidden");
-        }}
-      >
-        👍
-      </motion.button>
-
-      <motion.div
-        id={`react-${msg.id}`}
-        className="hidden absolute left-0 top-full mt-2 z-50 flex gap-1 bg-green-900/80 p-2 rounded-xl border border-green-600"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 10 }}
-      >
-        {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-          <button
-            key={emoji}
-            onClick={async () => {
-              const docRef = doc(db, 'chat', msg.id);
-              const currentReaction = msg.reaction || "";
-              await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
-              const popup = document.getElementById(`react-${msg.id}`);
-              if (popup) popup.classList.add("hidden");
-            }}
-            className="hover:scale-110 transition-transform"
-          >
-            {emoji}
-          </button>
-        ))}
-      </motion.div>
-    </div>
-))}
-
           </div>
 
           <div className="mt-6 flex items-center gap-2">
@@ -331,174 +269,6 @@ export default function BioSite() {
 
           <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
         </motion.div>
-
-        {isAdmin && (
-          <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
-            <button
-              className="sm:hidden block mb-2 text-green-400 underline"
-              onClick={() => setAdminPanelOpen(!adminPanelOpen)}
-            >
-              {adminPanelOpen ? "Hide Admin Panel" : "Show Admin Panel"}
-            </button>
-            {(adminPanelOpen || window.innerWidth >= 640) && (
-              <div className="flex flex-col h-full">
-                <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
-                <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
-                <textarea
-                  placeholder="Type your message as admin..."
-                  className="w-full bg-black border border-green-600 text-green-200 p-2 rounded mb-2 resize-none text-sm sm:text-base"
-                  rows={3}
-                  onKeyDown={async (e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      const adminMessage = e.target.value.trim();
-                      if (!adminMessage) return;
-                      const time = new Date().toLocaleTimeString();
-                      await addDoc(chatCollection, {
-                        user: adminMessage,
-                        recipient: userName,
-                        userName: "Abdallah",
-                        time,
-                        timestamp: serverTimestamp()
-                      });
-                      e.target.value = "";
-
-                      try {
-                        await emailjs.send("service_2fdtfyg", "template_btw21b8", {
-                          user_name: "Abdallah",
-                          message: adminMessage,
-                          to_email: "abdallahelabd05@gmail.com"
-                        }, "vhPVKbLsc89CisiWl");
-                      } catch (error) {
-                        console.error("Email failed:", error);
-                      }
-                    }
-                  }}
-                />
-                <div className="flex-1 overflow-y-auto space-y-4 mt-3">
-                  {Object.entries(
-                    chatLog.reduce((acc, msg) => {
-                      const otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
-                      if (!acc[otherUser]) acc[otherUser] = [];
-                      acc[otherUser].push(msg);
-                      return acc;
-                    }, {})
-          ).map(([participant, messages]) => (
-                    <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
-                      <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
-<button
-  className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
-  onClick={async () => {
-  const confirmClear = window.confirm(`Are you sure you want to clear the conversation with ${participant}?`);
-  if (!confirmClear) return;
-  const idsToDelete = messages.map((m) => m.id);
-  for (const id of idsToDelete) {
-    await deleteDoc(doc(db, "chat", id));
-  }
-}}
->
-  🗑 Clear conversation
-</button>
-                      <ul className="space-y-2 text-sm">
-                        {messages.map((msg, index) => (
-                          <li
-                            key={index}
-                            className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
-                          >
-                            <p className="text-green-100">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}</p>
-<motion.div
-  className="flex gap-2 mt-1"
-  initial={{ opacity: 0, scale: 0.8 }}
-  animate={{ opacity: 1, scale: 1 }}
-  transition={{ type: 'spring', stiffness: 200, damping: 10 }}
->
-
-  {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-    <button
-      key={emoji}
-      onClick={async () => {
-        const docRef = doc(db, 'chat', msg.id);
-        const currentReaction = msg.reaction || "";
-        await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
-      }}
-      className="text-sm hover:scale-110 transition-transform"
-    >
-      {emoji}
-    </button>
-  ))}
-</motion.div>
-{isAdmin && (
-  <button
-    className="text-xs text-red-400 mt-1 hover:text-red-600"
-    onClick={async () => {
-      const confirmDelete = window.confirm("Delete this message?");
-      if (confirmDelete) {
-        await deleteDoc(doc(db, 'chat', msg.id));
-      }
-    }}
-  >
-    🗑 Delete
-  </button>
-)}
-                            <span className="block text-xs text-green-500 mt-1">{msg.time}</span>
-{isAdmin && msg.userName === "Abdallah" && (
-  <span className="block text-[10px] text-green-400 mt-0.5">
-    {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
-  </span>
-)}
-                          </li>
-                        ))}
-                      </ul>
-
-      <form
-        className="mt-3 flex gap-2"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const input = e.target.elements[`reply-${participant}`];
-          const message = input.value.trim();
-          if (!message) return;
-          const time = new Date().toLocaleTimeString();
-          await addDoc(chatCollection, {
-  user: message,
-  recipient: participant,
-  userName: "Abdallah",
-  time,
-  timestamp: serverTimestamp(),
-  seenByUser: false
-});
-          input.value = "";
-
-          try {
-            await emailjs.send("service_2fdtfyg", "template_btw21b8", {
-              user_name: "Abdallah",
-              message,
-              to_email: "abdallahelabd05@gmail.com"
-            }, "vhPVKbLsc89CisiWl");
-          } catch (error) {
-            console.error("Email failed:", error);
-          }
-        }}
-      >
-        <input
-          type="text"
-          name={`reply-${participant}`}
-          placeholder={`Reply to ${participant}...`}
-          className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
-        />
-        <button
-          type="submit"
-          className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
-        >
-          Send
-        </button>
-      </form>
-    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </section>
     </main>
   );
