@@ -91,7 +91,7 @@ export default function BioSite() {
           const docRef = doc(db, "chat", msg.id);
           updateDoc(docRef, {
             seenByUser: true,
-            seenTime: new Date().toLocaleTimeString(),
+            seenTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
           });
         });
     }
@@ -274,19 +274,17 @@ export default function BioSite() {
                     {msg.userName !== userName && (
   <div className="flex gap-1 mt-1 items-center">
     <motion.button
-      initial={{ opacity: 0, scale: 0.5 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileTap={{ scale: 0.9 }}
-      whileHover={{ scale: 1.2 }}
+      whileHover={{ scale: 1.25, rotate: 5 }}
+      whileTap={{ scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-      className="text-xs bg-green-700 px-2 py-0.5 rounded hover:bg-green-600"
+      className="text-xs bg-gradient-to-br from-green-600 to-green-800 px-2 py-0.5 rounded-full hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
       onClick={(e) => {
         e.stopPropagation();
         const popup = document.getElementById(`react-${msg.id}`);
         if (popup) popup.classList.toggle("hidden");
       }}
     >
-      <span role="img" aria-label="react">😊</span>
+      <span role="img" aria-label="react" className="block">😊</span>
     </motion.button>
     <motion.div
       id={`react-${msg.id}`}
