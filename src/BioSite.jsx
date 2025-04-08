@@ -352,7 +352,7 @@ export default function BioSite() {
 )}
           </div>
 
-          <div className="mt-6 flex flex-wrap sm:flex-nowrap items-center gap-2 border-t border-green-700 pt-4 text-lg">
+          <div className="mt-6 sm:flex-nowrap flex items-center gap-2 border-t border-green-700 pt-4 text-lg flex-nowrap">
             <span className="text-green-500">$</span>
             <input
               ref={inputRef}
