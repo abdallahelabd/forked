@@ -49,8 +49,8 @@ function PinnedCommands({ setCommand, inputRef }) {
             className="px-4 py-2 bg-green-500 text-black font-semibold rounded-2xl shadow-md hover:bg-green-400 hover:scale-105 transition-all duration-200"
           >
             {cmd}
-          </button>
-        ))}
+          </motion.button>
+  ))}
       </div>
     </div>
   );
@@ -59,7 +59,9 @@ function PinnedCommands({ setCommand, inputRef }) {
 const handleReaction = async (msg, emoji, setChatLog) => {
   try {
     const docRef = doc(db, 'chat', msg.id);
-    const newReaction = msg.reaction === emoji ? "" : emoji;
+
+    const newReaction =
+      msg.reaction === emoji ? "" : emoji; // Only remove if same emoji clicked
 
     setChatLog(prev =>
       prev.map(m => (m.id === msg.id ? { ...m, reaction: newReaction } : m))
@@ -346,7 +348,11 @@ export default function BioSite() {
                     <p className="text-green-100">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}</p>
                     <div className="flex gap-2 mt-1">
                       {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-                        <button
+    <motion.button
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 300 }}
+
                           key={emoji}
                           onClick={() => handleReaction(msg, emoji, setChatLog)}
                           className="text-sm hover:scale-110 transition-transform" title="React with this emoji"
