@@ -361,16 +361,16 @@ export default function BioSite() {
                     <div className="flex gap-2 mt-1">
                       {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
     <motion.button
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300 }}
-
-                          key={emoji}
-                          onClick={() => handleReaction(msg, emoji, setChatLog)}
-                          className="text-sm hover:scale-110 transition-transform" title="React with this emoji"
-                        >
-                          {emoji}
-                        </button>
+  initial={{ scale: 0.8, opacity: 0 }}
+  animate={{ scale: 1, opacity: 1 }}
+  transition={{ type: "spring", stiffness: 300 }}
+  key={emoji}
+  onClick={() => handleReaction(log, emoji, setChatLog)}
+  className="text-sm hover:scale-110 transition-transform"
+  title="React with this emoji"
+>
+  {emoji}
+</motion.button>
                       ))}
                     </div>
                     {isAdmin && (
