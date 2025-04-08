@@ -276,7 +276,19 @@ export default function BioSite() {
   exit={{ opacity: 0, height: 0 }}
   className="overflow-hidden flex gap-2 mt-1"
 >
-  $1
+  {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+    <motion.button
+      key={emoji}
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 300 }}
+      onClick={() => handleReaction(log, emoji, setChatLog)}
+      className="text-sm hover:scale-110 transition-transform"
+      title="React with this emoji"
+    >
+      {emoji}
+    </motion.button>
+  ))}
 </motion.div>
                 </div>
               ))}
