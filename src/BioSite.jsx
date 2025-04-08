@@ -119,11 +119,7 @@ export default function BioSite() {
           });
       }
 
-      const outputLines = messages
-        .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
-        .map(log => log);
-
-      setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05"]);
+      setChatLog(messages);
     });
 
     return () => unsubscribe();
@@ -149,11 +145,10 @@ export default function BioSite() {
 
     if (chatMode && trimmed !== "exit") {
       if (!isAdmin) {
-        const time = new Date().toLocaleTimeString();
+        // Removed client-side time; using only serverTimestamp now
         const newMsg = {
           user: trimmed,
           userName,
-          time,
           timestamp: serverTimestamp()
         };
         try {
@@ -248,6 +243,22 @@ export default function BioSite() {
       <section className="max-w-6xl mx-auto text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <div className="space-y-3">
+            {/* Terminal Output Panel */}
+            {staticOutput.map((line, idx) => (
+              <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words">{line}</pre>
+            ))}
+            {animatedOutput.map((line, idx) => (
+              <AnimatedLine
+                key={`animated-${idx}`}
+                text={line}
+                onComplete={(line) => {
+                  setStaticOutput((prev) => [...prev, line]);
+                  setAnimatedOutput([]);
+                }}
+              />
+            ))}
+            <hr className="border-t border-green-700 my-6" />
+            <p className="text-green-400 font-bold text-sm">💬 Chat</p>
             {chatLog
               .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
               .map((log, idx) => (
@@ -255,7 +266,7 @@ export default function BioSite() {
                   <p className="text-green-100 font-semibold">
                   {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
  {log.user}
-                    <span className="text-xs text-green-400 ml-2">({log.time})</span>
+                    <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
                     {log.reaction && (
   <motion.span
     key={`${log.id}-${log.reaction}`}
@@ -269,24 +280,25 @@ export default function BioSite() {
   {log.reaction}
   </motion.span>)}
                   </p>
-                  <motion.button
-  whileTap={{ scale: 0.9 }}
-  whileHover={{ scale: 1.1 }}
-  onClick={() => {
-    const el = document.getElementById(`react-${log.id}`);
-    if (el) el.classList.toggle("hidden");
-  }}
-  className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
-  title="React"
->
-  👍
-</motion.button>
+                  {log.userName !== userName && (
+  <motion.button
+    whileTap={{ scale: 0.9 }}
+    whileHover={{ scale: 1.1 }}
+    onClick={() => {
+      const el = document.getElementById(`react-${log.id}`);
+      if (el) el.classList.toggle("hidden");
+    }}
+    className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
+    title="React"
+  >
+    👍
+  </motion.button>
+)}
 <motion.div
   id={`react-${log.id}`}
   initial={{ opacity: 0, height: 0 }}
-  animate={{ opacity: 1, height: 'auto' }}
-  exit={{ opacity: 0, height: 0 }}
-  className="overflow-hidden flex gap-2 mt-1"
+  animate={false}
+  className="hidden overflow-hidden flex gap-2 mt-1"
 >
   {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
     <motion.button
@@ -409,7 +421,7 @@ export default function BioSite() {
                         🗑 Delete
                       </button>
                     )}
-                    <span className="block text-xs text-green-500 mt-1">{msg.time}</span>
+                    <span className="block text-xs text-green-500 mt-1">{msg.timestamp?.toDate && new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
                     {msg.userName === "Abdallah" && (
                       <span className="block text-[10px] text-green-400 mt-0.5">
                         {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
