@@ -255,17 +255,27 @@ export default function BioSite() {
                     <span className="text-xs text-green-400 ml-2">({log.time})</span>
                     {log.reaction && <span className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm animate-bounce shadow-md">{log.reaction}</span>}
                   </p>
-                  <div className="flex gap-2 mt-1">
-                    {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => handleReaction(log, emoji, setChatLog)}
-                        className="text-sm hover:scale-110 transition-transform"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+                  <button
+  onClick={() => {
+    const id = `react-${log.id}`;
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("hidden");
+  }}
+  className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
+>
+  👍
+</button>
+<div id={`react-${log.id}`} className="hidden flex gap-2 mt-1">
+  {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+    <button
+      key={emoji}
+      onClick={() => handleReaction(log, emoji, setChatLog)}
+      className="text-sm hover:scale-110 transition-transform"
+    >
+      {emoji}
+    </button>
+  ))}
+</div>
                 </div>
               ))}
             <div ref={outputRef} />
