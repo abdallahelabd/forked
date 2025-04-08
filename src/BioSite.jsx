@@ -269,6 +269,140 @@ export default function BioSite() {
 
           <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
         </motion.div>
+
+        {isAdmin && (
+  <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
+    <button
+      className="sm:hidden block mb-2 text-green-400 underline"
+      onClick={() => setAdminPanelOpen(!adminPanelOpen)}
+    >
+      {adminPanelOpen ? "Hide Admin Panel" : "Show Admin Panel"}
+    </button>
+    {(adminPanelOpen || window.innerWidth >= 640) && (
+      <div className="flex flex-col h-full">
+        <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
+        <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
+
+        <div className="flex-1 overflow-y-auto space-y-4 mt-3">
+          {Object.entries(
+            chatLog.reduce((acc, msg) => {
+              const otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
+              if (!acc[otherUser]) acc[otherUser] = [];
+              acc[otherUser].push(msg);
+              return acc;
+            }, {})
+          ).map(([participant, messages]) => (
+            <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
+              <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
+
+              <button
+                className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
+                onClick={async () => {
+                  const confirmClear = window.confirm(`Clear conversation with ${participant}?`);
+                  if (!confirmClear) return;
+                  const idsToDelete = messages.map((m) => m.id);
+                  for (const id of idsToDelete) {
+                    await deleteDoc(doc(db, "chat", id));
+                  }
+                }}
+              >
+                🗑 Clear conversation
+              </button>
+
+              <ul className="space-y-2 text-sm">
+                {messages.map((msg, index) => (
+                  <li
+                    key={index}
+                    className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
+                  >
+                    <p className="text-green-100">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}</p>
+                    <div className="flex gap-2 mt-1">
+                      {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={async () => {
+                            const docRef = doc(db, 'chat', msg.id);
+                            const currentReaction = msg.reaction || "";
+                            await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
+                          }}
+                          className="text-sm hover:scale-110 transition-transform"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                    {isAdmin && (
+                      <button
+                        className="text-xs text-red-400 mt-1 hover:text-red-600"
+                        onClick={async () => {
+                          const confirmDelete = window.confirm("Delete this message?");
+                          if (confirmDelete) {
+                            await deleteDoc(doc(db, 'chat', msg.id));
+                          }
+                        }}
+                      >
+                        🗑 Delete
+                      </button>
+                    )}
+                    <span className="block text-xs text-green-500 mt-1">{msg.time}</span>
+                    {msg.userName === "Abdallah" && (
+                      <span className="block text-[10px] text-green-400 mt-0.5">
+                        {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+
+              <form
+                className="mt-3 flex gap-2"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const input = e.target.elements[`reply-${participant}`];
+                  const message = input.value.trim();
+                  if (!message) return;
+                  const time = new Date().toLocaleTimeString();
+                  await addDoc(chatCollection, {
+                    user: message,
+                    recipient: participant,
+                    userName: "Abdallah",
+                    time,
+                    timestamp: serverTimestamp(),
+                    seenByUser: false
+                  });
+                  input.value = "";
+                  try {
+                    await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+                      user_name: "Abdallah",
+                      message,
+                      to_email: "abdallahelabd05@gmail.com"
+                    }, "vhPVKbLsc89CisiWl");
+                  } catch (error) {
+                    console.error("Email failed:", error);
+                  }
+                }}
+              >
+                <input
+                  type="text"
+                  name={`reply-${participant}`}
+                  placeholder={`Reply to ${participant}...`}
+                  className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
+                />
+                <button
+                  type="submit"
+                  className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
+                >
+                  Send
+                </button>
+              </form>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
       </section>
     </main>
   );
