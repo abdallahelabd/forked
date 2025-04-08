@@ -256,6 +256,14 @@ export default function BioSite() {
                     {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}: {log.user}
                     <span className="text-xs text-green-400 ml-2">({log.time})</span>
                     {log.reaction && (
+  <motion.div
+    key={`${log.id}-${log.reaction}`}
+    initial={{ scale: 0.5, opacity: 0 }}
+    animate={{ scale: 1.1, opacity: 1 }}
+    transition={{ type: 'spring', stiffness: 400 }}
+    whileHover={{ scale: 1.2 }}
+    title={`Reaction: ${log.reaction}`}
+  >
   <motion.span
     key={log.reaction}
     initial={{ scale: 0.5, opacity: 0 }}
@@ -264,7 +272,7 @@ export default function BioSite() {
     className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md"
   >
     {log.reaction}
-  </motion.span>
+  </motion.div>
 )}
                   </p>
                   <motion.button
