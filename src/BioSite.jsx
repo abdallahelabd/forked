@@ -263,21 +263,19 @@ export default function BioSite() {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("hidden");
   }}
-  className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
+  className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md" title={log.reaction ? 'Remove reaction' : 'React'}
 >
   {log.reaction ? "❌" : "👍"}
 </motion.button>
-<div id={`react-${log.id}`} className="hidden flex gap-2 mt-1">
-  {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-    <button
-      key={emoji}
-      onClick={() => handleReaction(log, emoji, setChatLog)}
-      className="text-sm hover:scale-110 transition-transform"
-    >
-      {emoji}
-    </button>
-  ))}
-</div>
+<motion.div
+  id={`react-${log.id}`}
+  initial={{ opacity: 0, height: 0 }}
+  animate={{ opacity: 1, height: 'auto' }}
+  exit={{ opacity: 0, height: 0 }}
+  className="overflow-hidden flex gap-2 mt-1"
+>
+  $1
+</motion.div>
                 </div>
               ))}
             <div ref={outputRef} />
@@ -351,7 +349,7 @@ export default function BioSite() {
                         <button
                           key={emoji}
                           onClick={() => handleReaction(msg, emoji, setChatLog)}
-                          className="text-sm hover:scale-110 transition-transform"
+                          className="text-sm hover:scale-110 transition-transform" title="React with this emoji"
                         >
                           {emoji}
                         </button>
