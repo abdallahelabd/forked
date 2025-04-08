@@ -427,7 +427,7 @@ if (popup) popup.classList.add("hidden");
     >
       {emoji}
     </button>
-  ))}
+  )
 </motion.div>
 {isAdmin && (
   <button
