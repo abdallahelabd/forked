@@ -118,7 +118,7 @@ export default function BioSite() {
 
         const userLine = log.userName === "Abdallah"
           ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
-          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time})${reaction}`;
+          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
 
         return userLine;
       });
