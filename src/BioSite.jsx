@@ -282,8 +282,8 @@ Twitter: @abdallahelabd05</pre>
       .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
       .map((log, idx) => (
         <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
-          <p className="text-green-100 font-semibold">
-            {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
+          <p className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"} font-semibold`}>
+              {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
             {log.user}
             <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
             {log.reaction && (
@@ -368,7 +368,7 @@ Twitter: @abdallahelabd05</pre>
 
           <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
         </motion.div>
-
+        </section>
         {isAdmin && (
   <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
     <button
