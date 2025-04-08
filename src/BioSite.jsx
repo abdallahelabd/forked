@@ -259,14 +259,15 @@ export default function BioSite() {
             </div>
           )}
           <div className="space-y-3">
-            {/* Terminal Output Panel with custom styling */}
-            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto">
-  <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
-  <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
-</div>
-<div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
-  <div className=\"mb-4 flex items-center gap-2\">
-    <span className=\"text-green-500\">$</span>
+  {/* Terminal Header */}
+  <div className="bg-black/40 border border-green-700 p-5 rounded-xl shadow-inner shadow-green-800/20 overflow-x-auto">
+    <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
+    <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
+  </div>
+
+  {/* Input box */}
+  <div className="mb-4 flex items-center gap-2">
+    <span className="text-green-500">$</span>
     <input
       ref={inputRef}
       type="text"
@@ -279,6 +280,28 @@ export default function BioSite() {
       autoFocus
     />
   </div>
+            {/* Terminal Output Panel with custom styling */}
+            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto">
+  <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
+  <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
+</div>
+<div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
+  {staticOutput.map((line, idx) => (
+    line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
+      <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
+    )
+  ))}
+  {animatedOutput.map((line, idx) => (
+    <AnimatedLine
+      key={`animated-${idx}`}
+      text={line}
+      onComplete={(line) => {
+        setStaticOutput((prev) => [...prev, line]);
+        setAnimatedOutput([]);
+      }}
+    />
+  ))}
+</div>
   {staticOutput.map((line, idx) => (
     line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
       <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
