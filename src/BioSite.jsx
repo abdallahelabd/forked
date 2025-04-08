@@ -110,7 +110,7 @@ export default function BioSite() {
           const nameStyled = `<span class='font-semibold text-green-300'>${log.userName === userName ? "You" : log.userName}</span>`;
 
           return log.userName === "Abdallah"
-            ? `<span class='text-yellow-400'>🫅 <strong>Abdallah</strong>: ${log.user} ${timeStyled}${reaction} <button onclick="document.getElementById('react-${log.id}')?.classList.toggle('hidden')" class='ml-2 text-xs bg-yellow-600 px-2 py-1 rounded-full hover:shadow-lg'>👍</button><span id='react-${log.id}' class='hidden ml-2 text-sm'>[👍 😂 ❤️ 🔥 👀]</span></span>`
+            ? `<span class='text-yellow-400'>🫅 <strong>Abdallah</strong>: ${log.user} ${timeStyled}${reaction} <button onClick={() => document.getElementById(`react-${log.id}`)?.classList.toggle('hidden')} class='ml-2 text-xs bg-yellow-600 px-2 py-1 rounded-full hover:shadow-lg'>👍</button><span id='react-${log.id}' class='hidden ml-2 text-sm'>[👍 😂 ❤️ 🔥 👀]</span></span>`
             : `👤 ${nameStyled}: ${log.user} <span class='text-xs text-green-500 ml-2'>(${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span> <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
         });
 
