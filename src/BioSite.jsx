@@ -112,19 +112,13 @@ export default function BioSite() {
         log.recipient === userName
       )
       .map(log => {
-        const reaction = log.reaction
+         const reaction = log.reaction
           ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-xs animate-bounce shadow-md'>${log.reaction}</span>`
           : "";
 
-        const formattedTime = new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], {
-  hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
-});
-const seenStatus = `<span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}`;
-const reactionBadge = log.reaction ? ` ${log.reaction}` : "";
-
-const userLine = log.userName === "Abdallah"
-  ? `🫅 Abdallah: ${log.user} (${formattedTime}${reactionBadge})`
-  : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${formattedTime}) ${seenStatus}${reactionBadge}`;
+        const userLine = log.userName === "Abdallah"
+          ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
+          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
 
         return userLine;
       });
