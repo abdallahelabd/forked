@@ -282,7 +282,7 @@ export default function BioSite() {
       if (popup) popup.classList.toggle("hidden");
     }}
   >
-    <span role="img" aria-label="react" className="block">👍</span>
+    <span role="img" aria-label="react" className="block">😊</span>
   </motion.button>
   <motion.div
     id={`react-${msg.id}`}
@@ -312,7 +312,7 @@ if (popup) popup.classList.add("hidden");
     ))}
   </motion.div>
 </div>
-
+)}
                   </div>
               ))}
           </div>
@@ -407,7 +407,30 @@ if (popup) popup.classList.add("hidden");
                             key={index}
                             className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
                           >
-                            <p className="text-green-100">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}</p>
+                            <p className="text-green-100 flex items-center">
+  {msg.user}
+  {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}
+  <motion.div
+    className="ml-2 flex gap-1"
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+  >
+    {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+      <button
+        key={emoji}
+        onClick={async () => {
+          const docRef = doc(db, 'chat', msg.id);
+          const currentReaction = msg.reaction || "";
+          await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
+        }}
+        className="text-sm hover:scale-110 transition-transform"
+      >
+        {emoji}
+      </button>
+    ))}
+  </motion.div>
+</p>
 <motion.div
   className="flex gap-2 mt-1"
   initial={{ opacity: 0, scale: 0.8 }}
@@ -526,6 +549,15 @@ const AnimatedLine = ({ text, onComplete }) => {
       }
     }, 15);
     return () => clearInterval(interval);
+  }, [text]);
+
+  const isHtml = /<[^>]+>/.test(text);
+  return isHtml ? (
+    <pre dangerouslySetInnerHTML={{ __html: text }} />
+  ) : (
+    <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
+  );
+};
   }, [text]);
 
   const isHtml = /<[^>]+>/.test(text);
