@@ -261,22 +261,7 @@ export default function BioSite() {
             </div>
             <hr className="border-t border-green-700 my-6" />
             <p className="text-green-400 font-bold text-sm">💬 Chat</p>
-            {/* Terminal Output Panel */}
-            {staticOutput.map((line, idx) => (
-              <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words">{line}</pre>
-            ))}
-            {animatedOutput.map((line, idx) => (
-              <AnimatedLine
-                key={`animated-${idx}`}
-                text={line}
-                onComplete={(line) => {
-                  setStaticOutput((prev) => [...prev, line]);
-                  setAnimatedOutput([]);
-                }}
-              />
-            ))}
-            <hr className="border-t border-green-700 my-6" />
-            <p className="text-green-400 font-bold text-sm">💬 Chat</p>
+            
             {chatLog
               .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
               .map((log, idx) => (
