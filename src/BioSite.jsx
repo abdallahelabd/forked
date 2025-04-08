@@ -120,7 +120,7 @@ export default function BioSite() {
 
           return log.userName === "Abdallah"
             ? `🫅 Abdallah: ${log.user} (${formattedTime}${reactionBadge})`
-            : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${formattedTime}) ${seenStatus}${reactionBadge}`;
+            : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${formattedTime}${reactionBadge}) ${seenStatus}`;
         });
 
     setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
