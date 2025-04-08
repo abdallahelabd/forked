@@ -113,14 +113,17 @@ export default function BioSite() {
       )
       .map(log => {
         const reaction = log.reaction
-          ? `<span class='absolute right-0 top-1 text-lg animate-bounce'>${log.reaction}</span>`
+          ? `<span class='ml-2 inline-block bg-green-800 px-2 py-1 rounded-full text-white text-xs shadow-md'>${log.reaction}</span>`
           : "";
 
         const userLine = log.userName === "Abdallah"
           ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
           : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
 
-        return `<div class='relative group hover:bg-green-900/20 transition p-2 rounded-lg'>${userLine}<span class='hidden group-hover:inline-block ml-2 text-green-500 text-xs'>(reply)</span></div>`;
+        return `<div class='relative group hover:bg-green-900/20 transition p-2 rounded-lg flex items-center justify-between'>
+  <div>\${userLine}</div>
+  <span class='hidden group-hover:inline-block text-green-500 text-xs ml-4 cursor-pointer'>↩ Reply</span>
+</div>`;
       });
 
     setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
