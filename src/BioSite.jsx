@@ -75,10 +75,11 @@ const handleReaction = async (msg, emoji, setChatLog) => {
 
 export default function BioSite() {
   const [command, setCommand] = useState("");
-  const [staticOutput, setStaticOutput] = useState(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05"]);
+  const [staticOutput, setStaticOutput] = useState([]);
   const [animatedOutput, setAnimatedOutput] = useState([]);
   const [queuedLines, setQueuedLines] = useState([]);
   const [chatMode, setChatMode] = useState(false);
+  const [booting, setBooting] = useState(true);
   const [chatLog, setChatLog] = useState([]);
   const [userName, setUserName] = useState(() => {
     const stored = localStorage.getItem("userName");
@@ -239,101 +240,119 @@ export default function BioSite() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-16 font-mono relative overflow-hidden">
+    <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base">
+      <div className="bg-black border border-green-700 rounded-md p-4 sm:p-6 max-w-6xl mx-auto shadow-lg shadow-green-900/30">
       <section className="max-w-6xl mx-auto text-base sm:text-lg md:text-xl relative z-10 px-2">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+        >
+          {booting && (
+            <div className="text-green-500 mb-4 font-mono">
+              <AnimatedLine text="[booting terminal session...💻]" onComplete={() => setBooting(false)} />
+            </div>
+          )}
           <div className="space-y-3">
             {/* Terminal Output Panel with custom styling */}
             <div className="bg-green-950/20 border border-green-700 p-4 rounded-xl mb-6">
-              {staticOutput.map((line, idx) => (
-                <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
-              ))}
-              {animatedOutput.map((line, idx) => (
-                <AnimatedLine
-                  key={`animated-${idx}`}
-                  text={line}
-                  onComplete={(line) => {
-                    setStaticOutput((prev) => [...prev, line]);
-                    setAnimatedOutput([]);
-                  }}
-                />
-              ))}
-            </div>
-            <hr className="border-t border-green-700 my-6" />
-            <p className="text-green-400 font-bold text-sm">💬 Chat</p>
-            
-            {chatLog
-              .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
-              .map((log, idx) => (
-                <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
-                  <p className="text-green-100 font-semibold">
-                  {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
- {log.user}
-                    <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
-                    {log.reaction && (
-  <motion.span
-    key={`${log.id}-${log.reaction}`}
-    initial={{ scale: 0.5, opacity: 0 }}
-    animate={{ scale: 1.1, opacity: 1 }}
-    transition={{ type: 'spring', stiffness: 400 }}
-    whileHover={{ scale: 1.2 }}
-    title={`Reaction: ${log.reaction}`}
-    className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
-  >
-  {log.reaction}
-  </motion.span>)}
-                  </p>
-                  {log.userName !== userName && (
-  <motion.button
-    whileTap={{ scale: 0.9 }}
-    whileHover={{ scale: 1.1 }}
-    onClick={() => {
-      const el = document.getElementById(`react-${log.id}`);
-      if (el) el.classList.toggle("hidden");
-    }}
-    className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
-    title="React"
-  >
-    👍
-  </motion.button>
-)}
-<motion.div
-  id={`react-${log.id}`}
-  initial={{ opacity: 0, height: 0 }}
-  animate={false}
-  className="hidden overflow-hidden flex gap-2 mt-1"
->
-  {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-    <motion.button
-      key={emoji}
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300 }}
-      onClick={() => handleReaction(log, emoji, setChatLog)}
-      className="text-sm hover:scale-110 transition-transform"
-      title="React with this emoji"
-    >
-      {emoji}
-    </motion.button>
+  <pre className="text-green-300">Abdallah Elabd 💚
+Twitter: @abdallahelabd05</pre>
+  {staticOutput.map((line, idx) => (
+    line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
+      <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
+    )
   ))}
-  {log.reaction && (
-    <motion.button
-      whileTap={{ scale: 0.9 }}
-      whileHover={{ scale: 1.1 }}
-      onClick={() => handleReaction(log, log.reaction, setChatLog)}
-      className="text-sm text-red-400 hover:text-red-600"
-      title="Remove reaction"
-    >
-      ❌
-    </motion.button>
-  )}
-</motion.div>
-                </div>
-              ))}
-            <div ref={outputRef} />
+  {animatedOutput.map((line, idx) => (
+    <AnimatedLine
+      key={`animated-${idx}`}
+      text={line}
+      onComplete={(line) => {
+        setStaticOutput((prev) => [...prev, line]);
+        setAnimatedOutput([]);
+      }}
+    />
+  ))}
+</div>
+            <hr className="border-t border-green-700 my-6" />
+            {chatMode && (
+  <>
+    <p className="text-green-400 font-bold text-sm">💬 Chat</p>
+    {chatLog
+      .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
+      .map((log, idx) => (
+        <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
+          <p className="text-green-100 font-semibold">
+            {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
+            {log.user}
+            <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
+            {log.reaction && (
+              <motion.span
+                key={`${log.id}-${log.reaction}`}
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1.1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 400 }}
+                whileHover={{ scale: 1.2 }}
+                title={`Reaction: ${log.reaction}`}
+                className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
+              >
+                {log.reaction}
+              </motion.span>
+            )}
+          </p>
+          {log.userName !== userName && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.1 }}
+              onClick={() => {
+                const el = document.getElementById(`react-${log.id}`);
+                if (el) el.classList.toggle("hidden");
+              }}
+              className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
+              title="React"
+            >
+              👍
+            </motion.button>
+          )}
+          <motion.div
+            id={`react-${log.id}`}
+            initial={{ opacity: 0, height: 0 }}
+            animate={false}
+            className="hidden overflow-hidden flex gap-2 mt-1"
+          >
+            {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+              <motion.button
+                key={emoji}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+                onClick={() => handleReaction(log, emoji, setChatLog)}
+                className="text-sm hover:scale-110 transition-transform"
+                title="React with this emoji"
+              >
+                {emoji}
+              </motion.button>
+            ))}
+            {log.reaction && (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.1 }}
+                onClick={() => handleReaction(log, log.reaction, setChatLog)}
+                className="text-sm text-red-400 hover:text-red-600"
+                title="Remove reaction"
+              >
+                ❌
+              </motion.button>
+            )}
+          </motion.div>
+        </div>
+      ))}
+    <div ref={outputRef} />
+  </>
+)}
           </div>
 
-          <div className="mt-6 flex items-center gap-2">
+          <div className="mt-6 flex items-center gap-2 border-t border-green-700 pt-4">
             <span className="text-green-500">$</span>
             <input
               ref={inputRef}
@@ -342,7 +361,7 @@ export default function BioSite() {
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCommand()}
               className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-              placeholder="type a command..."
+              placeholder="type a command..." title="Enter a terminal-style command"
               autoFocus
             />
           </div>
@@ -483,7 +502,7 @@ export default function BioSite() {
   </div>
 )}
 
-      </section>
+            </div>
     </main>
   );
 }
