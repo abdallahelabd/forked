@@ -265,6 +265,20 @@ export default function BioSite() {
   <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
 </div>
 <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
+  <div className=\"mb-4 flex items-center gap-2\">
+    <span className=\"text-green-500\">$</span>
+    <input
+      ref={inputRef}
+      type="text"
+      value={command}
+      onChange={(e) => setCommand(e.target.value)}
+      onKeyDown={(e) => e.key === "Enter" && handleCommand()}
+      className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+      placeholder={chatMode ? "type your message..." : "type a command..."}
+      title={chatMode ? "Enter your chat message" : "Enter a terminal-style command"}
+      autoFocus
+    />
+  </div>
   {staticOutput.map((line, idx) => (
     line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
       <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
@@ -359,19 +373,7 @@ export default function BioSite() {
 )}
           </div>
 
-          <div className="mt-6 sm:flex-nowrap flex items-center gap-2 border-t border-green-700 pt-4 text-lg flex-nowrap">
-            <span className="text-green-500">$</span>
-            <input
-              ref={inputRef}
-              type="text"
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleCommand()}
-              className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-              placeholder={chatMode ? "type your message..." : "type a command..."} title={chatMode ? "Enter your chat message" : "Enter a terminal-style command"}
-              autoFocus
-            />
-          </div>
+          
 
           <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
         </motion.div>
