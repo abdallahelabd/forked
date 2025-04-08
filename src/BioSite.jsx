@@ -38,7 +38,7 @@ function PinnedCommands({ setCommand, inputRef }) {
   return (
     <div className="mt-10 border border-green-700 p-4 rounded-xl bg-green-900/10 backdrop-blur-md">
       <p className="text-green-300 text-xl mb-3 font-bold underline">Pinned Commands</p>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
         {pinnedCommands.map((cmd) => (
           <button
             key={cmd}
@@ -241,7 +241,7 @@ export default function BioSite() {
 
   return (
     <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base w-full">
-      <div className="bg-black border border-green-700 rounded-lg p-4 sm:p-6 lg:p-8 w-full max-w-6xl mx-auto shadow-2xl shadow-green-900/50">
+      <div className="bg-black border border-green-700 rounded-lg p-4 sm:p-6 lg:p-8 w-full max-w-6xl mx-auto shadow-2xl shadow-green-900/50 overflow-x-hidden">
       <section className="w-full text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div
           initial={{ opacity: 0 }}
@@ -256,7 +256,7 @@ export default function BioSite() {
           <div className="space-y-3">
             {/* Terminal Output Panel with custom styling */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20">
-  <pre className="text-green-300 mb-2">Abdallah Elabd 💚</pre>
+  <pre className="text-green-300 mb-2 text-center sm:text-left text-sm sm:text-base">Abdallah Elabd 💚</pre>
 <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
   {staticOutput.map((line, idx) => (
     line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
@@ -352,7 +352,7 @@ export default function BioSite() {
 )}
           </div>
 
-          <div className="mt-6 flex items-center gap-2 border-t border-green-700 pt-4 text-lg">
+          <div className="mt-6 flex flex-wrap sm:flex-nowrap items-center gap-2 border-t border-green-700 pt-4 text-lg">
             <span className="text-green-500">$</span>
             <input
               ref={inputRef}
