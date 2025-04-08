@@ -46,7 +46,7 @@ function PinnedCommands({ setCommand, inputRef }) {
               setCommand(cmd);
               inputRef.current?.focus();
             }}
-            className="px-4 py-2 bg-green-500 text-black font-semibold rounded-2xl shadow-md hover:bg-green-400 hover:scale-105 transition-all duration-200"
+            className="px-5 py-2.5 bg-green-500 text-black font-bold rounded-full shadow-lg hover:bg-green-400 hover:scale-105 transition-all duration-200 tracking-wide text-lg"
           >
             {cmd}
           </button>
@@ -241,7 +241,7 @@ export default function BioSite() {
 
   return (
     <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base">
-      <div className="bg-black border border-green-700 rounded-md p-4 sm:p-6 max-w-6xl mx-auto shadow-lg shadow-green-900/30">
+      <div className="bg-gradient-to-b from-black via-zinc-900 to-black border border-green-700 rounded-lg p-6 sm:p-8 max-w-6xl mx-auto shadow-2xl shadow-green-900/50">
       <section className="max-w-6xl mx-auto text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div
           initial={{ opacity: 0 }}
@@ -255,7 +255,7 @@ export default function BioSite() {
           )}
           <div className="space-y-3">
             {/* Terminal Output Panel with custom styling */}
-            <div className="bg-green-950/20 border border-green-700 p-4 rounded-xl mb-6">
+            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20">
   <pre className="text-green-300">Abdallah Elabd 💚
 Twitter: @abdallahelabd05</pre>
   {staticOutput.map((line, idx) => (
@@ -352,7 +352,7 @@ Twitter: @abdallahelabd05</pre>
 )}
           </div>
 
-          <div className="mt-6 flex items-center gap-2 border-t border-green-700 pt-4">
+          <div className="mt-6 flex items-center gap-2 border-t border-green-700 pt-4 text-lg">
             <span className="text-green-500">$</span>
             <input
               ref={inputRef}
