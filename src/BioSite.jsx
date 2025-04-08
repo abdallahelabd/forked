@@ -56,6 +56,21 @@ function PinnedCommands({ setCommand, inputRef }) {
   );
 }
 
+const handleReaction = async (msg, emoji, setChatLog) => {
+  try {
+    const docRef = doc(db, 'chat', msg.id);
+    const newReaction = msg.reaction === emoji ? "" : emoji;
+
+    setChatLog(prev =>
+      prev.map(m => (m.id === msg.id ? { ...m, reaction: newReaction } : m))
+    );
+
+    await updateDoc(docRef, { reaction: newReaction });
+  } catch (err) {
+    console.error("❌ Failed to update reaction:", err);
+  }
+};
+
 export default function BioSite() {
   const [command, setCommand] = useState("");
   const [staticOutput, setStaticOutput] = useState(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05"]);
@@ -104,17 +119,9 @@ export default function BioSite() {
 
       const outputLines = messages
         .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
-        .map(log => {
-          const reaction = log.reaction ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm animate-bounce shadow-md' title='Reaction'>${log.reaction}</span>` : "";
-          const timeStyled = `<span class='text-xs text-green-400 ml-2'>(${log.time})</span>`;
-          const nameStyled = `<span class='font-semibold text-green-300'>${log.userName === userName ? "You" : log.userName}</span>`;
+        .map(log => log);
 
-          return log.userName === "Abdallah"
-            ? `<span class='text-yellow-400'>🫅 <strong>Abdallah</strong>: ${log.user} ${timeStyled}${reaction} <button onclick="document.getElementById('react-${log.id}')?.classList.toggle('hidden')" class='ml-2 text-xs bg-yellow-600 px-2 py-1 rounded-full hover:shadow-lg'>👍</button><span id='react-${log.id}' class='hidden ml-2 text-sm'>[👍 😂 ❤️ 🔥 👀]</span></span>`
-            : `👤 ${nameStyled}: ${log.user} <span class='text-xs text-green-500 ml-2'>(${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span> <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
-        });
-
-      setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
+      setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05"]);
     });
 
     return () => unsubscribe();
@@ -239,19 +246,28 @@ export default function BioSite() {
       <section className="max-w-6xl mx-auto text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <div className="space-y-3">
-            {staticOutput.map((line, idx) => (
-              <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: line }} />
-            ))}
-            {animatedOutput.map((line, idx) => (
-              <AnimatedLine
-                key={`animated-${idx}`}
-                text={line}
-                onComplete={(line) => {
-                  setStaticOutput((prev) => [...prev, line]);
-                  setAnimatedOutput([]);
-                }}
-              />
-            ))}
+            {chatLog
+              .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
+              .map((log, idx) => (
+                <div key={log.id} className="whitespace-pre-wrap break-words">
+                  <p>
+                    {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}: {log.user}
+                    <span className="text-xs text-green-400 ml-2">({log.time})</span>
+                    {log.reaction && <span className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm animate-bounce shadow-md">{log.reaction}</span>}
+                  </p>
+                  <div className="flex gap-2 mt-1">
+                    {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleReaction(log, emoji, setChatLog)}
+                        className="text-sm hover:scale-110 transition-transform"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             <div ref={outputRef} />
           </div>
 
@@ -322,11 +338,7 @@ export default function BioSite() {
                       {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
                         <button
                           key={emoji}
-                          onClick={async () => {
-                            const docRef = doc(db, 'chat', msg.id);
-                            const currentReaction = msg.reaction || "";
-                            await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
-                          }}
+                          onClick={() => handleReaction(msg, emoji, setChatLog)}
                           className="text-sm hover:scale-110 transition-transform"
                         >
                           {emoji}
