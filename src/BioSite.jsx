@@ -240,9 +240,9 @@ export default function BioSite() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base">
-      <div className="bg-gradient-to-b from-black via-zinc-900 to-black border border-green-700 rounded-lg p-6 sm:p-8 max-w-6xl mx-auto shadow-2xl shadow-green-900/50">
-      <section className="max-w-6xl mx-auto text-base sm:text-lg md:text-xl relative z-10 px-2">
+    <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base w-full">
+      <div className="bg-black border border-green-700 rounded-lg p-4 sm:p-6 lg:p-8 w-full max-w-6xl mx-auto shadow-2xl shadow-green-900/50">
+      <section className="w-full text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -256,8 +256,8 @@ export default function BioSite() {
           <div className="space-y-3">
             {/* Terminal Output Panel with custom styling */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20">
-  <pre className="text-green-300">Abdallah Elabd 💚
-Twitter: @abdallahelabd05</pre>
+  <pre className="text-green-300 mb-2">Abdallah Elabd 💚</pre>
+<pre className="text-green-300">Twitter: @abdallahelabd05</pre>
   {staticOutput.map((line, idx) => (
     line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
       <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
