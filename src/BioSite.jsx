@@ -55,10 +55,9 @@ function PinnedCommands({ setCommand, inputRef }) {
           </button>
         ))}
       </div>
-      </div>
+    </div>
   );
 }
-
 
 export default function BioSite() {
   const [command, setCommand] = useState("");
@@ -114,17 +113,14 @@ export default function BioSite() {
       )
       .map(log => {
         const reaction = log.reaction
-          ? `<span class='ml-2 inline-block bg-green-800 px-2 py-1 rounded-full text-white text-xs shadow-md'>${log.reaction}</span>`
+          ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-xs animate-bounce shadow-md'>${log.reaction}</span>`
           : "";
 
         const userLine = log.userName === "Abdallah"
           ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
           : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
 
-        return `<div class='relative group hover:bg-green-900/20 transition p-2 rounded-lg flex items-center justify-between'>
-  <div>\${userLine}</div>
-  <span class='hidden group-hover:inline-block text-green-500 text-xs ml-4 cursor-pointer'>↩ Reply</span>
-</div>`;
+        return userLine;
       });
 
     setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
@@ -248,8 +244,7 @@ export default function BioSite() {
   };
 
   return (
-    <>
-      <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-16 font-mono relative overflow-hidden">
+    <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-16 font-mono relative overflow-hidden">
       <section className="max-w-6xl mx-auto text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <div className="space-y-3">
@@ -257,18 +252,70 @@ export default function BioSite() {
               <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: line }} />
             ))}
             {animatedOutput.map((line, idx) => (
-  <AnimatedLine
-    key={`animated-${idx}`}
-    text={line}
-    onComplete={(line) => {
-      setStaticOutput((prev) => [...prev, line]);
-      setAnimatedOutput([]);
+              <AnimatedLine
+                key={`animated-${idx}`}
+                text={line}
+                onComplete={(line) => {
+                  setStaticOutput((prev) => [...prev, line]);
+                  setAnimatedOutput([]);
+                }}
+              />
+            ))}
+            <div ref={outputRef} />
+
+              {chatLog
+                .filter(msg => (msg.userName === userName || msg.recipient === userName) && msg.userName !== userName)
+                .map((msg, idx) => (
+                  <div key={msg.id || idx} className="mt-2">
+                    <div className="flex items-center gap-2 mt-2">
+  <div className="text-sm text-green-200">
+    {msg.userName === userName ? 'You' : msg.userName}: {msg.user}
+  </div>
+  <motion.button
+    whileHover={{ scale: 1.25, rotate: 5 }}
+    whileTap={{ scale: 0.95 }}
+    transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+    className="text-xs bg-gradient-to-br from-green-600 to-green-800 px-2 py-0.5 rounded-full hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+    onClick={(e) => {
+      e.stopPropagation();
+      const popup = document.getElementById(`react-${msg.id}`);
+      if (popup) popup.classList.toggle("hidden");
     }}
-  />
-))}
-<div ref={outputRef} />
-        
+  >
+    <span role="img" aria-label="react" className="block">😊</span>
+  </motion.button>
+  <motion.div
+    id={`react-${msg.id}`}
+    className="hidden gap-1 mt-1 bg-green-900/80 p-2 rounded-xl shadow-xl border border-green-600 absolute z-50"
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.8 }}
+    transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+  >
+    {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+      <button
+        key={emoji}
+        onClick={async () => {
+          const docRef = doc(db, 'chat', msg.id);
+          const currentReaction = msg.reaction || "";
+          await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
+const popup = document.getElementById(`react-${msg.id}`);
+if (popup) popup.classList.add("hidden");
+        }}
+        className="text-sm hover:scale-110 transition-transform"
+      >
+        {emoji}
+      </button>
+    ))}
+  </motion.div>
+</div>
+)}
                   </div>
+              ))}
+          </div>
 
           <div className="mt-6 flex items-center gap-2">
             <span className="text-green-500">$</span>
@@ -285,8 +332,9 @@ export default function BioSite() {
           </div>
 
           <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
+        </motion.div>
 
-{isAdmin && (
+        {isAdmin && (
           <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
             <button
               className="sm:hidden block mb-2 text-green-400 underline"
@@ -359,30 +407,15 @@ export default function BioSite() {
                             key={index}
                             className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
                           >
-                            <p className="text-green-100 flex items-center">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}
-  <span className="ml-2 flex gap-1">
-    {["👍", "😂", "❤️", "🔥", "👀", "😎", "🙌", "😭", "😡", "💯"].map((emoji) => (
-      <button
-        key={emoji}
-        onClick={async () => {
-          const docRef = doc(db, 'chat', msg.id);
-          const currentReaction = msg.reaction || "";
-          await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
-        }}
-        className="text-sm hover:scale-110 transition-transform"
-      >
-        {emoji}
-      </button>
-    ))}
-  </span>
-</p>
+                            <p className="text-green-100">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}</p>
 <motion.div
   className="flex gap-2 mt-1"
   initial={{ opacity: 0, scale: 0.8 }}
   animate={{ opacity: 1, scale: 1 }}
   transition={{ type: 'spring', stiffness: 200, damping: 10 }}
 >
-  {["👍", "😂", "❤️", "🔥", "👀", "😎", "🙌", "😭", "😡", "💯"].map((emoji) => (
+
+  {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
     <button
       key={emoji}
       onClick={async () => {
@@ -462,13 +495,14 @@ export default function BioSite() {
         </button>
       </form>
     </div>
-                  </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}
       </section>
-      </main>
-    </>
+    </main>
   );
 }
 
