@@ -279,13 +279,13 @@ export default function BioSite() {
   whileTap={{ scale: 0.9 }}
   whileHover={{ scale: 1.1 }}
   onClick={() => {
-    const id = `react-${log.id}`;
-    const el = document.getElementById(id);
+    const el = document.getElementById(`react-${log.id}`);
     if (el) el.classList.toggle("hidden");
   }}
-  className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md" title={log.reaction ? 'Remove reaction' : 'React'}
+  className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
+  title="React"
 >
-  {log.reaction ? "❌" : "👍"}
+  👍
 </motion.button>
 <motion.div
   id={`react-${log.id}`}
@@ -307,6 +307,17 @@ export default function BioSite() {
       {emoji}
     </motion.button>
   ))}
+  {log.reaction && (
+    <motion.button
+      whileTap={{ scale: 0.9 }}
+      whileHover={{ scale: 1.1 }}
+      onClick={() => handleReaction(log, log.reaction, setChatLog)}
+      className="text-sm text-red-400 hover:text-red-600"
+      title="Remove reaction"
+    >
+      ❌
+    </motion.button>
+  )}
 </motion.div>
                 </div>
               ))}
