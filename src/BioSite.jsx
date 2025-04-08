@@ -110,7 +110,7 @@ export default function BioSite() {
 const nameStyled = `<span class='font-semibold text-green-300'>${log.userName === userName ? "You" : log.userName}</span>`;
 
 const userLine = log.userName === "Abdallah"
-  ? `🫅 <span class='font-semibold text-green-300'>Abdallah</span>: ${log.user} ${timeStyled}${reaction}`
+  ? `🫅 <span class='font-semibold text-yellow-400'>Abdallah</span>: ${log.user} ${timeStyled}${reaction}`
   : `👤 ${nameStyled}: ${log.user} <span class='text-xs text-green-500 ml-2'>(${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span> <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
 
       setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
