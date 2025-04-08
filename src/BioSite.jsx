@@ -53,8 +53,7 @@ function PinnedCommands({ setCommand, inputRef }) {
           >
             {cmd}
           </button>
-        ))}
-      </div>
+        </div>
     </div>
   );
 }
@@ -267,7 +266,7 @@ export default function BioSite() {
 <div ref={outputRef} />
         
                   </div>
-        
+              ))}
           </div>
 
           <div className="mt-6 flex items-center gap-2">
@@ -448,9 +447,7 @@ export default function BioSite() {
         </button>
       </form>
     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
             )}
           </div>
         )}
