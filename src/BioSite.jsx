@@ -105,12 +105,13 @@ export default function BioSite() {
       const outputLines = messages
         .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
         .map(log => {
-          const reaction = log.reaction ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-xs animate-bounce shadow-md'>${log.reaction}</span>` : "";
-          const userLine = log.userName === "Abdallah"
-            ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
-            : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
-          return userLine;
-        });
+          const reaction = log.reaction ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm animate-bounce shadow-md' title='Reaction'>${log.reaction}</span>` : "";
+          const timeStyled = `<span class='text-xs text-green-400 ml-2'>(${log.time})</span>`;
+const nameStyled = `<span class='font-semibold text-green-300'>${log.userName === userName ? "You" : log.userName}</span>`;
+
+const userLine = log.userName === "Abdallah"
+  ? `🫅 <span class='font-semibold text-green-300'>Abdallah</span>: ${log.user} ${timeStyled}${reaction}`
+  : `👤 ${nameStyled}: ${log.user} <span class='text-xs text-green-500 ml-2'>(${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span> <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
 
       setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
     });
@@ -118,7 +119,7 @@ export default function BioSite() {
     return () => unsubscribe();
   }, [isAdmin, userName, adminPanelOpen]);
 
-  useEffect(() => {
+ useEffect(() => {
     outputRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [staticOutput, animatedOutput]);
 
