@@ -245,7 +245,7 @@ export default function BioSite() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base w-full">
+    <main className="min-h-screen bg-[#020b02] text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base w-full bg-[radial-gradient(ellipse_at_center,_#042f1d_0%,_#010d04_100%)]">
       <div className="bg-black border border-green-700 rounded-lg p-4 sm:p-6 lg:p-8 w-full max-w-6xl mx-auto shadow-2xl shadow-green-900/50 overflow-x-hidden">
       <section className="w-full text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div
@@ -267,29 +267,27 @@ export default function BioSite() {
 
   {/* Input box */}
   <div className="mb-4 flex items-center gap-2">
-    <span className="text-green-500">$</span>
-    <input
-      ref={inputRef}
-      type="text"
-      value={command}
-      onChange={(e) => setCommand(e.target.value)}
-      onKeyDown={(e) => e.key === "Enter" && handleCommand()}
-      className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-      placeholder={chatMode ? "type your message..." : "type a command..."}
-      title={chatMode ? "Enter your chat message" : "Enter a terminal-style command"}
-      autoFocus
-    />
-  </div>
+  <span className="text-green-500">$</span>
+  <input
+    ref={inputRef}
+    type="text"
+    value={command}
+    onChange={(e) => setCommand(e.target.value)}
+    onKeyDown={(e) => e.key === "Enter" && handleCommand()}
+    className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+    placeholder={chatMode ? "type your message..." : "type a command..."}
+    title={chatMode ? "Enter your chat message" : "Enter a terminal-style command"}
+    autoFocus
+  />
+</div>
             {/* Terminal Output Panel with custom styling */}
-            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto">
+            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-4 shadow-inner shadow-green-800/20 overflow-x-auto">
   <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
   <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
 </div>
 <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
   {staticOutput.map((line, idx) => (
-    line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
-      <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
-    )
+    <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
   ))}
   {animatedOutput.map((line, idx) => (
     <AnimatedLine
