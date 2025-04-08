@@ -113,16 +113,8 @@ export default function BioSite() {
       )
       .map(log => {
         const reaction = log.reaction
-          ? `<motion.span
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 10 }}
-              class='inline-block ml-2'>${log.reaction}</motion.span>`
+          ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-xs animate-bounce shadow-md'>${log.reaction}</span>`
           : "";
-        const userLine = log.userName === "Abdallah"
-          ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
-          : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${log.time}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
         return userLine;
       });
 
