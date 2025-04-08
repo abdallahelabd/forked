@@ -251,22 +251,23 @@ export default function BioSite() {
             {chatLog
               .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
               .map((log, idx) => (
-                <div key={log.id} className="whitespace-pre-wrap break-words">
-                  <p>
-                    {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}: {log.user}
+                {/* Style Abdallah's messages differently */}
+<div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`} >
+                  <p className="text-green-100 font-semibold">
+                  {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
+ {log.user}
                     <span className="text-xs text-green-400 ml-2">({log.time})</span>
                     {log.reaction && (
-  <motion.div
+  <motion.span
     key={`${log.id}-${log.reaction}`}
     initial={{ scale: 0.5, opacity: 0 }}
     animate={{ scale: 1.1, opacity: 1 }}
     transition={{ type: 'spring', stiffness: 400 }}
     whileHover={{ scale: 1.2 }}
     title={`Reaction: ${log.reaction}`}
-    className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md"
-  >
+    className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
     {log.reaction}
-  </motion.div>)}
+  </motion.span>)}
                   </p>
                   <motion.button
   whileTap={{ scale: 0.9 }}
