@@ -267,7 +267,7 @@ export default function BioSite() {
 <div ref={outputRef} />
         
                   </div>
-              ))}
+        
           </div>
 
           <div className="mt-6 flex items-center gap-2">
