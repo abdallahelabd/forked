@@ -274,7 +274,13 @@ export default function BioSite() {
   <motion.button
     whileHover={{ scale: 1.25, rotate: 5 }}
     whileTap={{ scale: 0.95 }}
-    transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.8 }}
+    transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
     className="text-xs bg-gradient-to-br from-green-600 to-green-800 px-2 py-0.5 rounded-full hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
     onClick={(e) => {
       e.stopPropagation();
