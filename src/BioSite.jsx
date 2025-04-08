@@ -282,7 +282,7 @@ export default function BioSite() {
       if (popup) popup.classList.toggle("hidden");
     }}
   >
-    <span role="img" aria-label="react" className="block">😊</span>
+    <span role="img" aria-label="react" className="block">👍</span>
   </motion.button>
   <motion.div
     id={`react-${msg.id}`}
@@ -309,7 +309,7 @@ if (popup) popup.classList.add("hidden");
       >
         {emoji}
       </button>
-    ))}
+    )
   </motion.div>
 </div>
 )}
@@ -427,7 +427,7 @@ if (popup) popup.classList.add("hidden");
     >
       {emoji}
     </button>
-  )
+  ))}
 </motion.div>
 {isAdmin && (
   <button
