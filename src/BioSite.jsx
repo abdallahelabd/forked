@@ -263,63 +263,56 @@ export default function BioSite() {
             ))}
             <div ref={outputRef} />
 
-              {chatLog
-                .filter(msg => (msg.userName === userName || msg.recipient === userName) && msg.userName !== userName)
-                .map((msg, idx) => (
-                  // <div key={msg.id || idx} className="mt-2">
-                   <div className="relative flex items-center gap-2 mt-2">
-  <div className="text-sm text-green-200">
-    {msg.userName === userName ? 'You' : msg.userName}: {msg.user}
-  </div>
-  <motion.button
-    whileHover={{ scale: 1.25, rotate: 5 }}
-    whileTap={{ scale: 0.95 }}
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 0.8 }}
-    transition={{ type: 'spring', stiffness: 200, damping: 12 }}
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
-    className="text-xs bg-gradient-to-br from-green-600 to-green-800 px-2 py-0.5 rounded-full hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-    onClick={(e) => {
-      e.stopPropagation();
-      const popup = document.getElementById(`react-${msg.id}`);
-      if (popup) popup.classList.toggle("hidden");
-    }}
-  >
-    <span role="img" aria-label="react" className="block">👍</span>
-  </motion.button>
-  <motion.div
-    id={`react-${msg.id}`}
-    className="hidden gap-1 mt-1 bg-green-900/80 p-2 rounded-xl shadow-xl border border-green-600 absolute z-50"
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 0.8 }}
-    transition={{ type: 'spring', stiffness: 200, damping: 12 }}
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
-  >
-    {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-      <button
-        key={emoji}
-        onClick={async () => {
-          const docRef = doc(db, 'chat', msg.id);
-          const currentReaction = msg.reaction || "";
-          await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
-const popup = document.getElementById(`react-${msg.id}`);
-if (popup) popup.classList.add("hidden");
+             {chatLog
+  .filter(msg => (msg.userName === userName || msg.recipient === userName) && msg.userName !== userName)
+  .map((msg, idx) => (
+    <div key={msg.id || idx} className="relative flex items-center gap-2 mt-2 text-sm text-green-200">
+      <span>
+        {msg.userName === userName ? 'You' : msg.userName}: {msg.user}
+        {msg.reaction && (
+          <span className="ml-2">{msg.reaction}</span>
+        )}
+      </span>
+
+      <motion.button
+        whileHover={{ scale: 1.25, rotate: 5 }}
+        whileTap={{ scale: 0.95 }}
+        className="ml-2 text-xs bg-green-700 px-1.5 py-0.5 rounded-full hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+        onClick={(e) => {
+          e.stopPropagation();
+          const popup = document.getElementById(`react-${msg.id}`);
+          if (popup) popup.classList.toggle("hidden");
         }}
-        className="text-sm hover:scale-110 transition-transform"
       >
-        {emoji}
-      </button>
-    ))}
-  </motion.div>
- 
-                  </div>
-              ))}
+        👍
+      </motion.button>
+
+      <motion.div
+        id={`react-${msg.id}`}
+        className="hidden absolute left-0 top-full mt-2 z-50 flex gap-1 bg-green-900/80 p-2 rounded-xl border border-green-600"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+      >
+        {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+          <button
+            key={emoji}
+            onClick={async () => {
+              const docRef = doc(db, 'chat', msg.id);
+              const currentReaction = msg.reaction || "";
+              await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
+              const popup = document.getElementById(`react-${msg.id}`);
+              if (popup) popup.classList.add("hidden");
+            }}
+            className="hover:scale-110 transition-transform"
+          >
+            {emoji}
+          </button>
+        ))}
+      </motion.div>
+    </div>
+))}
+
           </div>
 
           <div className="mt-6 flex items-center gap-2">
