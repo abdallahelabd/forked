@@ -285,7 +285,8 @@ export default function BioSite() {
           </div>
 
           <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
-        {isAdmin && (
+
+$1{isAdmin && (
           <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
             <button
               className="sm:hidden block mb-2 text-green-400 underline"
