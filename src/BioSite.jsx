@@ -265,10 +265,6 @@ export default function BioSite() {
               />
             ))}
             <div ref={outputRef} />
-
-              ;
-const popup = document.getElementById(`react-${msg.id}`);
-if (popup) popup.classList.add("hidden");
         }}
         className="text-sm hover:scale-110 transition-transform"
       >
