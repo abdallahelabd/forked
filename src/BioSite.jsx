@@ -110,7 +110,7 @@ export default function BioSite() {
           const nameStyled = `<span class='font-semibold text-green-300'>${log.userName === userName ? "You" : log.userName}</span>`;
 
           return log.userName === "Abdallah"
-            ? `<span class='text-yellow-400'>🫅 <strong>Abdallah</strong>: ${log.user} ${timeStyled}${reaction} <button onClick={() => document.getElementById(`react-${log.id}`)?.classList.toggle('hidden')} class='ml-2 text-xs bg-yellow-600 px-2 py-1 rounded-full hover:shadow-lg'>👍</button><span id='react-${log.id}' class='hidden ml-2 text-sm'>[👍 😂 ❤️ 🔥 👀]</span></span>`
+            ? `<span class='text-yellow-400'>🫅 <strong>Abdallah</strong>: ${log.user} ${timeStyled}${reaction} <button onclick="document.getElementById('react-${log.id}')?.classList.toggle('hidden')" class='ml-2 text-xs bg-yellow-600 px-2 py-1 rounded-full hover:shadow-lg'>👍</button><span id='react-${log.id}' class='hidden ml-2 text-sm'>[👍 😂 ❤️ 🔥 👀]</span></span>`
             : `👤 ${nameStyled}: ${log.user} <span class='text-xs text-green-500 ml-2'>(${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span> <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
         });
 
@@ -239,52 +239,9 @@ export default function BioSite() {
       <section className="max-w-6xl mx-auto text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <div className="space-y-3">
-            {chatLog
-              .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
-              .map((log) => (
-                <div key={log.id} className="flex items-center gap-2 mt-2">
-                  <span
-                    className={`text-sm ${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-200"}`}
-                  >
-                    {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName}`}: {log.user}
-                    <span className="text-xs text-green-400 ml-1">({log.time})</span>
-                    {log.reaction && <span className="ml-2">{log.reaction}</span>}
-                  </span>
-                  <button
-                    onClick={() =>
-                      document
-                        .getElementById(`react-${log.id}`)
-                        ?.classList.toggle("hidden")
-                    }
-                    className="ml-2 text-xs bg-yellow-600 px-2 py-1 rounded-full hover:shadow-lg"
-                  >
-                    👍
-                  </button>
-                  <div
-                    id={`react-${log.id}`}
-                    className="hidden gap-1 ml-2 bg-green-900/80 p-2 rounded-xl border border-green-600"
-                  >
-                    {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={async () => {
-                          const docRef = doc(db, "chat", log.id);
-                          const currentReaction = log.reaction || "";
-                          await updateDoc(docRef, {
-                            reaction: currentReaction === emoji ? "" : emoji,
-                          });
-                          document
-                            .getElementById(`react-${log.id}`)
-                            ?.classList.add("hidden");
-                        }}
-                        className="hover:scale-110 transition-transform"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+            {staticOutput.map((line, idx) => (
+              <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: line }} />
+            ))}
             {animatedOutput.map((line, idx) => (
               <AnimatedLine
                 key={`animated-${idx}`}
