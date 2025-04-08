@@ -113,14 +113,14 @@ export default function BioSite() {
       )
       .map(log => {
         const reaction = log.reaction
-          ? `<span class='inline-block ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-xs animate-bounce shadow-md'>${log.reaction}</span>`
+          ? `<span class='absolute right-0 top-1 text-lg animate-bounce'>${log.reaction}</span>`
           : "";
 
         const userLine = log.userName === "Abdallah"
           ? `🫅 Abdallah: ${log.user} (${log.time})${reaction}`
           : `👤 ${log.userName === userName ? "You" : log.userName}: ${log.user} (${new Date(log.timestamp?.toDate?.()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}) <span class='text-blue-400'>✓</span>${log.seenByAdmin ? " <span class='text-blue-400'>✓</span>" : ""}${reaction}`;
 
-        return userLine;
+        return `<div class='relative group hover:bg-green-900/20 transition p-2 rounded-lg'>${userLine}<span class='hidden group-hover:inline-block ml-2 text-green-500 text-xs'>(reply)</span></div>`;
       });
 
     setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
@@ -263,45 +263,7 @@ export default function BioSite() {
             ))}
             <div ref={outputRef} />
 
-              {chatLog
-                .filter(msg => (msg.userName === userName || msg.recipient === userName) && msg.userName !== userName)
-                .map((msg, idx) => (
-                  <div key={msg.id || idx} className="mt-2">
-                    <div className="flex items-center gap-2 mt-2">
-  <div className="text-sm text-green-200">
-    {msg.userName === userName ? 'You' : msg.userName}: {msg.user}
-  </div>
-  <motion.button
-    whileHover={{ scale: 1.25, rotate: 5 }}
-    whileTap={{ scale: 0.95 }}
-    transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-    className="text-xs bg-gradient-to-br from-green-600 to-green-800 px-2 py-0.5 rounded-full hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-    onClick={(e) => {
-      e.stopPropagation();
-      const popup = document.getElementById(`react-${msg.id}`);
-      if (popup) popup.classList.toggle("hidden");
-    }}
-  >
-    <span role="img" aria-label="react" className="block">😊</span>
-  </motion.button>
-  <motion.div
-    id={`react-${msg.id}`}
-    className="hidden gap-1 mt-1 bg-green-900/80 p-2 rounded-xl shadow-xl border border-green-600 absolute z-50"
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 0.8 }}
-    transition={{ type: 'spring', stiffness: 200, damping: 12 }}
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
-  >
-    {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-      <button
-        key={emoji}
-        onClick={async () => {
-          const docRef = doc(db, 'chat', msg.id);
-          const currentReaction = msg.reaction || "";
-          await updateDoc(docRef, { reaction: currentReaction === emoji ? "" : emoji });
+              ;
 const popup = document.getElementById(`react-${msg.id}`);
 if (popup) popup.classList.add("hidden");
         }}
