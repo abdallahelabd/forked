@@ -376,14 +376,13 @@ export default function BioSite() {
     ))}
   </span>
 </p>
-{/* Removed motion.div under message */}
+<motion.div
   className="flex gap-2 mt-1"
   initial={{ opacity: 0, scale: 0.8 }}
   animate={{ opacity: 1, scale: 1 }}
   transition={{ type: 'spring', stiffness: 200, damping: 10 }}
 >
-
-  {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+  {["👍", "😂", "❤️", "🔥", "👀", "😎", "🙌", "😭", "😡", "💯"].map((emoji) => (
     <button
       key={emoji}
       onClick={async () => {
