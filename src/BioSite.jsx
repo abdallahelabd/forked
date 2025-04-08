@@ -251,8 +251,7 @@ export default function BioSite() {
             {chatLog
               .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
               .map((log, idx) => (
-                {/* Style Abdallah's messages differently */}
-<div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`} >
+                <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
                   <p className="text-green-100 font-semibold">
                   {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
  {log.user}
