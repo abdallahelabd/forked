@@ -273,9 +273,21 @@ export default function BioSite() {
                     <div className="text-sm text-green-200">{msg.userName === userName ? 'You' : msg.userName}: {msg.user}</div>
                     {msg.userName !== userName && (
   <div className="flex gap-1 mt-1 items-center">
-    <motion.button$1>
-        <span role="img" aria-label="react">😊</span>
-      </motion.button></button>
+    <motion.button
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileTap={{ scale: 0.9 }}
+      whileHover={{ scale: 1.2 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+      className="text-xs bg-green-700 px-2 py-0.5 rounded hover:bg-green-600"
+      onClick={(e) => {
+        e.stopPropagation();
+        const popup = document.getElementById(`react-${msg.id}`);
+        if (popup) popup.classList.toggle("hidden");
+      }}
+    >
+      <span role="img" aria-label="react">😊</span>
+    </motion.button>
     <motion.div
       id={`react-${msg.id}`}
       className="hidden gap-1"
