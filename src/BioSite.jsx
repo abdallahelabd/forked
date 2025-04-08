@@ -255,16 +255,16 @@ export default function BioSite() {
               <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: line }} />
             ))}
             {animatedOutput.map((line, idx) => (
-              <AnimatedLine
-                key={`animated-${idx}`}
-                text={line}
-                onComplete={(line) => {
-                  setStaticOutput((prev) => [...prev, line]);
-                  setAnimatedOutput([]);
-                }}
-              />
-            ))}
-            <div ref={outputRef} />
+  <AnimatedLine
+    key={`animated-${idx}`}
+    text={line}
+    onComplete={(line) => {
+      setStaticOutput((prev) => [...prev, line]);
+      setAnimatedOutput([]);
+    }}
+  />
+))}
+<div ref={outputRef} />
         
                   </div>
               ))}
