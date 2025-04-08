@@ -78,6 +78,7 @@ export default function BioSite() {
   const [staticOutput, setStaticOutput] = useState([]);
   const [animatedOutput, setAnimatedOutput] = useState([]);
   const [queuedLines, setQueuedLines] = useState([]);
+  const [lineDelay, setLineDelay] = useState(0);
   const [chatMode, setChatMode] = useState(false);
   const [booting, setBooting] = useState(true);
   const [chatLog, setChatLog] = useState([]);
@@ -235,7 +236,11 @@ export default function BioSite() {
     }
 
     setStaticOutput((prev) => [...prev, `$ ${trimmed}`]);
-    setQueuedLines(result);
+    result.forEach((line, index) => {
+      setTimeout(() => {
+        setQueuedLines((prev) => [...prev, line]);
+      }, index * 400);
+    });
     setCommand("");
   };
 
