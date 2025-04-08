@@ -243,6 +243,24 @@ export default function BioSite() {
       <section className="max-w-6xl mx-auto text-base sm:text-lg md:text-xl relative z-10 px-2">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <div className="space-y-3">
+            {/* Terminal Output Panel with custom styling */}
+            <div className="bg-green-950/20 border border-green-700 p-4 rounded-xl mb-6">
+              {staticOutput.map((line, idx) => (
+                <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
+              ))}
+              {animatedOutput.map((line, idx) => (
+                <AnimatedLine
+                  key={`animated-${idx}`}
+                  text={line}
+                  onComplete={(line) => {
+                    setStaticOutput((prev) => [...prev, line]);
+                    setAnimatedOutput([]);
+                  }}
+                />
+              ))}
+            </div>
+            <hr className="border-t border-green-700 my-6" />
+            <p className="text-green-400 font-bold text-sm">💬 Chat</p>
             {/* Terminal Output Panel */}
             {staticOutput.map((line, idx) => (
               <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words">{line}</pre>
