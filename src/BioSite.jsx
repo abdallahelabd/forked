@@ -113,7 +113,7 @@ export default function BioSite() {
             ? `<span class='text-yellow-400'>🫅 <strong>Abdallah</strong>: ${log.user} ${timeStyled}${reaction} <button onclick="document.getElementById('react-${log.id}')?.classList.toggle('hidden')" class='ml-2 text-xs bg-yellow-600 px-2 py-1 rounded-full hover:shadow-lg'>👍</button><span id='react-${log.id}' class='hidden ml-2 text-sm'>[👍 😂 ❤️ 🔥 👀]</span></span>`;
         });
 
-      setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
+      setStaticOutput(["Abdallah Elabd 💚", "Twitter: @abdallahelabd05", ...outputLines]);
     });
 
     return () => unsubscribe();
