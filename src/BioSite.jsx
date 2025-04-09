@@ -128,7 +128,10 @@ export default function BioSite() {
   }, [isAdmin, userName, adminPanelOpen]);
 
  useEffect(() => {
-    outputRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = setTimeout(() => {
+      outputRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+    return () => clearTimeout(scrollToBottom);
   }, [staticOutput, animatedOutput]);
 
   useEffect(() => {
