@@ -1,18 +1,4 @@
-<div className="flex gap-2">
-                        <input
-                          type="text"
-                          name={`reply-${participant}`}
-                          placeholder={`Reply to ${participant}...`}
-                          className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
-                        />
-                        <button
-                          type="submit"
-                          className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
-                        >
-                          Send
-                        </button>
-                      </div>
-                    </form>import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
@@ -28,12 +14,6 @@ import {
   updateDoc,
   deleteDoc
 } from "firebase/firestore";
-import {
-  getStorage,
-  ref as storageRef,
-  uploadBytesResumable,
-  getDownloadURL
-} from "firebase/storage";
 
 // Firebase config
 const firebaseConfig = {
@@ -49,7 +29,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 const chatCollection = collection(db, "chat");
 
 function PinnedCommands({ setCommand, inputRef }) {
@@ -109,10 +88,6 @@ export default function BioSite() {
   const [chatMode, setChatMode] = useState(false);
   const [booting, setBooting] = useState(true);
   const [chatLog, setChatLog] = useState([]);
-  const [imageToUpload, setImageToUpload] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [userName, setUserName] = useState(() => {
     const stored = localStorage.getItem("userName");
     if (stored) return stored;
@@ -176,7 +151,7 @@ export default function BioSite() {
 
   const handleCommand = async () => {
     const trimmed = command.trim();
-    if (!trimmed && !imageToUpload) return;
+    if (!trimmed) return;
 
     const [baseCmd, ...args] = trimmed.split(" ");
 
@@ -185,63 +160,33 @@ export default function BioSite() {
       setChatMode(false);
       setStaticOutput((prev) => [...prev, `$ ${trimmed}`, "Exited chat mode."]);
       setCommand("");
-      setImageToUpload(null);
-      setImagePreview(null);
       return;
     }
 
     if (chatMode) {
       if (!isAdmin) {
-        let imageUrl = null;
-        
-        // Upload image if there is one
-        if (imageToUpload) {
-          setUploading(true);
-          try {
-            const timestamp = Date.now();
-            const imageName = `${userName}_${timestamp}_${imageToUpload.name}`;
-            const imageRef = storageRef(storage, `chat_images/${imageName}`);
-            
-            const uploadTask = uploadBytesResumable(imageRef, imageToUpload);
-            
-            // Listen for upload progress
-            uploadTask.on('state_changed', 
-              (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(progress);
-              },
-              (error) => {
-                console.error("❌ Image upload failed:", error);
-                alert("Failed to upload image. Please try again.");
-                setUploading(false);
-              },
-              async () => {
-                // Get download URL when upload completes
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                imageUrl = downloadURL;
-                
-                // Now send the message with the image URL
-                await sendChatMessage(trimmed, imageUrl);
-                setUploading(false);
-                setUploadProgress(0);
-                setImageToUpload(null);
-                setImagePreview(null);
-              }
-            );
-            
-            // If there's no image, just send the message text
-            if (!imageToUpload) {
-              await sendChatMessage(trimmed, null);
-            }
-          } catch (err) {
-            console.error("❌ Image upload error:", err);
-            setUploading(false);
-            // Try to send just the text message if image upload fails
-            await sendChatMessage(trimmed, null);
+        // Removed client-side time; using only serverTimestamp now
+        const newMsg = {
+          user: trimmed,
+          userName,
+          timestamp: serverTimestamp()
+        };
+        try {
+          await addDoc(chatCollection, newMsg);
+        } catch (err) {
+          console.error("❌ Failed to write message to Firestore:", err);
+        }
+        try {
+          if (userName !== "Abdallah") {
+            // Only send email notifications for messages from regular users, not from admin
+            await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+              user_name: userName,
+              message: trimmed,
+              to_email: "abdallahelabd05@gmail.com"
+            }, "vhPVKbLsc89CisiWl");
           }
-        } else {
-          // No image to upload, just send the text message
-          await sendChatMessage(trimmed, null);
+        } catch (error) {
+          console.error("❌ Email failed:", error);
         }
       } else {
         setStaticOutput((prev) => [...prev, "❌ Admins must reply using the panel."]);
@@ -312,68 +257,6 @@ export default function BioSite() {
     });
     setCommand("");
   };
-  
-  // Helper function to send chat messages
-  const sendChatMessage = async (messageText, imageUrl) => {
-    try {
-      const newMsg = {
-        user: messageText,
-        userName,
-        timestamp: serverTimestamp(),
-        imageUrl: imageUrl
-      };
-      
-      await addDoc(chatCollection, newMsg);
-      
-      try {
-        if (userName !== "Abdallah") {
-          // Only send email notifications for messages from regular users, not from admin
-          await emailjs.send("service_2fdtfyg", "template_btw21b8", {
-            user_name: userName,
-            message: messageText + (imageUrl ? " [Image attached]" : ""),
-            to_email: "abdallahelabd05@gmail.com"
-          }, "vhPVKbLsc89CisiWl");
-        }
-      } catch (error) {
-        console.error("❌ Email failed:", error);
-      }
-    } catch (err) {
-      console.error("❌ Failed to write message to Firestore:", err);
-    }
-  };
-  
-  // Handle image selection
-  const handleImageSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Check file type
-    if (!file.type.match('image.*')) {
-      alert("Please select an image file");
-      return;
-    }
-    
-    // Check file size (limit to 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image size must be less than 5MB");
-      return;
-    }
-    
-    setImageToUpload(file);
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target.result);
-    };
-    reader.readAsDataURL(file);
-  };
-  
-  // Remove selected image
-  const removeSelectedImage = () => {
-    setImageToUpload(null);
-    setImagePreview(null);
-  };
 
   return (
     <main className="min-h-screen bg-[#020b02] text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base w-full bg-[radial-gradient(ellipse_at_center,_#042f1d_0%,_#010d04_100%)]">
@@ -415,21 +298,20 @@ export default function BioSite() {
                   ))}
                   
                   {/* Command input is always inside the terminal */}
-                  <div className="mt-4 flex items-center justify-center w-full">
-                    <span className="text-green-500 w-6 text-right mr-3">$</span>
+                  <div className="mt-4 flex items-center gap-2">
+                    <span className="text-green-500">$</span>
                     <input
                       ref={inputRef}
                       type="text"
                       value={command}
                       onChange={(e) => setCommand(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleCommand()}
-                      className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full max-w-md px-4"
+                      className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
                       placeholder={animatedOutput.length > 0 ? "waiting for output to finish..." : "type a command..."}
                       title="Enter a terminal-style command"
                       disabled={animatedOutput.length > 0}
                       autoFocus
                     />
-                    <div className="w-6"></div> {/* Balance the spacing on the right */}
                   </div>
                 </>
               )}
@@ -487,18 +369,6 @@ export default function BioSite() {
                             <span className="text-xs text-gray-400 ml-2">✓ Sent</span>
                           )}
                         </p>
-
-                        {/* Display image if the message has one */}
-                        {log.imageUrl && (
-                          <div className="mt-2 max-w-xs mx-auto">
-                            <img 
-                              src={log.imageUrl} 
-                              alt="Shared image" 
-                              className="rounded-lg border border-green-700 shadow-md max-w-full cursor-pointer"
-                              onClick={() => window.open(log.imageUrl, '_blank')}
-                            />
-                          </div>
-                        )}
                         
                         {/* Only show reaction button for messages from other users, not the user's own messages,
                           and hide the button if the user has already reacted to the message */}
@@ -610,81 +480,26 @@ export default function BioSite() {
                 </div>
 
                 {/* Integrated input in chat box */}
-                <div className="flex flex-col gap-2">
-                  {/* Image preview if an image is selected */}
-                  {imagePreview && (
-                    <div className="relative p-2 bg-black/30 border border-green-600 rounded-xl">
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="text-green-400 text-sm">Image to upload:</p>
-                        <button 
-                          onClick={removeSelectedImage}
-                          className="text-red-400 hover:text-red-600 p-1 rounded-full"
-                          title="Remove image"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
-                        className="rounded-lg max-h-40 max-w-full mx-auto border border-green-700"
-                      />
-                      {uploading && (
-                        <div className="mt-2">
-                          <div className="w-full bg-green-900/30 rounded-full h-2.5">
-                            <div 
-                              className="bg-green-600 h-2.5 rounded-full" 
-                              style={{ width: `${uploadProgress}%` }}
-                            ></div>
-                          </div>
-                          <p className="text-xs text-green-400 text-center mt-1">
-                            Uploading: {Math.round(uploadProgress)}%
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                
-                  <div className="flex items-center gap-2 bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
-                    <span className="text-green-500">💬</span>
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={command}
-                      onChange={(e) => setCommand(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && !uploading && handleCommand()}
-                      className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-                      placeholder="Type your message or 'exit' to quit chat mode..."
-                      title="Enter your chat message"
-                      disabled={uploading}
-                      autoFocus
-                    />
-                    
-                    {/* Image upload button */}
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        className="hidden"
-                        disabled={uploading}
-                      />
-                      <span 
-                        className={`px-2 py-1 rounded-full text-sm font-bold ${uploading ? 'bg-green-900 text-green-700 cursor-not-allowed' : 'bg-green-800 hover:bg-green-700 text-white cursor-pointer'}`}
-                        title="Attach image"
-                      >
-                        📷
-                      </span>
-                    </label>
-                    
-                    <button
-                      onClick={handleCommand}
-                      disabled={(!command.trim() && !imageToUpload) || uploading}
-                      className={`px-3 py-1 rounded-full text-sm font-bold ${(command.trim() || imageToUpload) && !uploading ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer' : 'bg-green-900 text-green-700 cursor-not-allowed'}`}
-                    >
-                      Send
-                    </button>
-                  </div>
+                <div className="flex items-center gap-2 bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
+                  <span className="text-green-500">💬</span>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={command}
+                    onChange={(e) => setCommand(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleCommand()}
+                    className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+                    placeholder="Type your message or 'exit' to quit chat mode..."
+                    title="Enter your chat message"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleCommand}
+                    disabled={!command.trim()}
+                    className={`px-3 py-1 rounded-full text-sm font-bold ${command.trim() ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer' : 'bg-green-900 text-green-700 cursor-not-allowed'}`}
+                  >
+                    Send
+                  </button>
                 </div>
                 <div ref={outputRef} />
               </div>
@@ -748,18 +563,6 @@ export default function BioSite() {
                               <span className='ml-2 bg-green-700 px-2 py-1 rounded-full'>{msg.reaction}</span>
                             }
                           </p>
-                          
-                          {/* Display image in admin panel too */}
-                          {msg.imageUrl && (
-                            <div className="my-2">
-                              <img 
-                                src={msg.imageUrl} 
-                                alt="Shared image" 
-                                className="rounded-lg border border-green-700 shadow-md max-w-full max-h-32 cursor-pointer"
-                                onClick={() => window.open(msg.imageUrl, '_blank')}
-                              />
-                            </div>
-                          )}
                           <div className="flex gap-2 mt-1">
                             {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
                               <motion.button
@@ -798,8 +601,8 @@ export default function BioSite() {
                       ))}
                     </ul>
 
-                                          <form
-                      className="mt-3 flex flex-col gap-2"
+                    <form
+                      className="mt-3 flex gap-2"
                       onSubmit={async (e) => {
                         e.preventDefault();
                         const input = e.target.elements[`reply-${participant}`];
