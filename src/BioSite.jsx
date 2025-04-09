@@ -279,24 +279,6 @@ export default function BioSite() {
               <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
             </div>
 
-            {/* Input box - Integrated into the chat box when in chat mode */}
-            {!chatMode && (
-              <div className="mb-4 flex items-center gap-2 bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
-                <span className="text-green-500">$</span>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={command}
-                  onChange={(e) => setCommand(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCommand()}
-                  className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-                  placeholder="type a command..."
-                  title="Enter a terminal-style command"
-                  autoFocus
-                />
-              </div>
-            )}
-
             {/* Terminal Command Output with integrated input */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
               {!chatMode && (
@@ -388,38 +370,32 @@ export default function BioSite() {
                           )}
                         </p>
                         {log.userName !== userName && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            <p className="text-xs text-green-300 mr-1">React:</p>
-                            {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-                              <motion.button
-                                key={emoji}
-                                whileTap={{ scale: 0.9 }}
-                                whileHover={{ scale: 1.1 }}
-                                onClick={() => handleReaction(log, emoji, setChatLog)}
-                                className={`text-sm hover:bg-green-700 px-2 py-1 rounded-full transition-all ${log.reaction === emoji ? 'bg-green-700 shadow-md' : 'bg-green-900/30'}`}
-                                title={`React with ${emoji}`}
-                              >
-                                {emoji}
-                              </motion.button>
-                            ))}
-                            {log.reaction && (
-                              <motion.button
-                                whileTap={{ scale: 0.9 }}
-                                whileHover={{ scale: 1.1 }}
-                                onClick={() => handleReaction(log, log.reaction, setChatLog)}
-                                className="text-xs text-red-400 hover:text-red-600 bg-black/30 px-2 py-1 rounded-full"
-                                title="Remove reaction"
-                              >
-                                Remove
-                              </motion.button>
-                            )}
-                          </div>
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.1 }}
+                            onClick={() => {
+                              const el = document.getElementById(`react-${log.id}`);
+                              if (el) {
+                                // Toggle the reaction menu
+                                if (el.classList.contains("hidden")) {
+                                  el.classList.remove("hidden");
+                                  el.classList.add("flex");
+                                } else {
+                                  el.classList.add("hidden");
+                                  el.classList.remove("flex");
+                                }
+                              }
+                            }}
+                            className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
+                            title="React"
+                          >
+                            👍
+                          </motion.button>
                         )}
+                        
                         <motion.div
                           id={`react-${log.id}`}
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          className="flex gap-2 mt-1"
+                          className="hidden gap-2 mt-1"
                         >
                           {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
                             <motion.button
@@ -556,8 +532,8 @@ export default function BioSite() {
                                 transition={{ type: "spring", stiffness: 300 }}
                                 key={emoji}
                                 onClick={() => handleReaction(msg, emoji, setChatLog)}
-                                className={`text-sm hover:scale-110 transition-transform ${msg.reaction === emoji ? 'bg-green-800 px-2 py-1 rounded-full' : ''}`}
-                                title="React with this emoji"
+                                className={`text-sm hover:bg-green-700 px-2 py-1 rounded-full transition-all ${msg.reaction === emoji ? 'bg-green-700 shadow-md' : 'bg-green-900/30'}`}
+                                title={`React with ${emoji}`}
                               >
                                 {emoji}
                               </motion.button>
