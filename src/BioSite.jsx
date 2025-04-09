@@ -65,7 +65,10 @@ const handleReaction = async (msg, emoji, setChatLog) => {
       prev.map(m => (m.id === msg.id ? { ...m, reaction: newReaction } : m))
     );
 
-    await updateDoc(docRef, { reaction: newReaction });
+    await updateDoc(docRef, { 
+      reaction: newReaction,
+      reactionTime: serverTimestamp()
+    });
   } catch (err) {
     console.error("❌ Failed to update reaction:", err);
   }
@@ -171,6 +174,7 @@ export default function BioSite() {
         }
         try {
           if (userName !== "Abdallah") {
+            // Only send email notifications for messages from regular users, not from admin
             await emailjs.send("service_2fdtfyg", "template_btw21b8", {
               user_name: userName,
               message: trimmed,
@@ -273,7 +277,7 @@ export default function BioSite() {
 
             {/* Input box - MOVED HERE to be between the info and command output */}
             <div className="mb-4 flex items-center gap-2 bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
-              <span className="text-green-500">$</span>
+              <span className="text-green-500">{chatMode ? "💬" : "$"}</span>
               <input
                 ref={inputRef}
                 type="text"
@@ -289,10 +293,10 @@ export default function BioSite() {
 
             {/* Terminal Command Output */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
-              {staticOutput.map((line, idx) => (
+              {!chatMode && staticOutput.map((line, idx) => (
                 <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
               ))}
-              {animatedOutput.map((line, idx) => (
+              {!chatMode && animatedOutput.map((line, idx) => (
                 <AnimatedLine
                   key={`animated-${idx}`}
                   text={line}
@@ -302,10 +306,15 @@ export default function BioSite() {
                   }}
                 />
               ))}
+              {chatMode && (
+                <p className="text-green-300 mb-3">
+                  <span className="text-yellow-300 font-bold">Chat mode active.</span> Type a message below to chat with Abdallah. Type 'exit' to return to command mode.
+                </p>
+              )}
             </div>
             
             {chatMode && (
-              <>
+              <div className="bg-black/30 border border-green-600 rounded-xl p-4 shadow-lg">
                 <div className="flex justify-between items-center mb-4">
                   <p className="text-green-400 font-bold text-lg">💬 Chat Mode</p>
                   <button 
@@ -318,6 +327,17 @@ export default function BioSite() {
                     <span>Exit Chat</span> ✕
                   </button>
                 </div>
+                
+                {/* Preview of user's message as they type */}
+                {command && (
+                  <div className="bg-green-900/20 text-left p-3 rounded-xl max-w-[80%] mb-4 border border-green-800">
+                    <p className="text-green-100 font-semibold">
+                      👤 You (typing): 
+                      <span className="text-white ml-2">{command}</span>
+                      <span className="animate-pulse ml-1">|</span>
+                    </p>
+                  </div>
+                )}
                 {chatLog
                   .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
                   .map((log, idx) => (
@@ -370,7 +390,7 @@ export default function BioSite() {
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ type: "spring", stiffness: 300 }}
                             onClick={() => handleReaction(log, emoji, setChatLog)}
-                            className="text-sm hover:scale-110 transition-transform"
+                            className={`text-sm hover:scale-110 transition-transform ${log.reaction === emoji ? 'bg-green-800 px-2 py-1 rounded-full' : ''}`}
                             title="React with this emoji"
                           >
                             {emoji}
@@ -391,7 +411,7 @@ export default function BioSite() {
                     </div>
                   ))}
                 <div ref={outputRef} />
-              </>
+              </div>
             )}
           </div>
 
@@ -443,7 +463,12 @@ export default function BioSite() {
                           key={index}
                           className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
                         >
-                          <p className="text-green-100">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}</p>
+                          <p className="text-green-100">
+                            {msg.user} 
+                            {msg.reaction && 
+                              <span className='ml-2 bg-green-700 px-2 py-1 rounded-full'>{msg.reaction}</span>
+                            }
+                          </p>
                           <div className="flex gap-2 mt-1">
                             {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
                               <motion.button
@@ -452,7 +477,7 @@ export default function BioSite() {
                                 transition={{ type: "spring", stiffness: 300 }}
                                 key={emoji}
                                 onClick={() => handleReaction(msg, emoji, setChatLog)}
-                                className="text-sm hover:scale-110 transition-transform"
+                                className={`text-sm hover:scale-110 transition-transform ${msg.reaction === emoji ? 'bg-green-800 px-2 py-1 rounded-full' : ''}`}
                                 title="React with this emoji"
                               >
                                 {emoji}
@@ -500,11 +525,13 @@ export default function BioSite() {
                         });
                         input.value = "";
                         try {
-                          await emailjs.send("service_2fdtfyg", "template_btw21b8", {
-                            user_name: "Abdallah",
-                            message,
-                            to_email: "abdallahelabd05@gmail.com"
-                          }, "vhPVKbLsc89CisiWl");
+                          // No need to send email notification for admin's own messages
+                          // This prevents admin from emailing themselves
+                          // await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+                          //   user_name: "Abdallah",
+                          //   message,
+                          //   to_email: "abdallahelabd05@gmail.com"
+                          // }, "vhPVKbLsc89CisiWl");
                         } catch (error) {
                           console.error("Email failed:", error);
                         }
