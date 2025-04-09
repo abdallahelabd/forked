@@ -297,7 +297,7 @@ export default function BioSite() {
               </div>
             )}
 
-            {/* Terminal Command Output */}
+            {/* Terminal Command Output with integrated input */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
               {!chatMode && (
                 <>
@@ -315,23 +315,22 @@ export default function BioSite() {
                     />
                   ))}
                   
-                  {/* Command input moves inside the terminal output when not in chat mode */}
-                  {!animatedOutput.length > 0 && (
-                    <div className="mt-4 flex items-center gap-2">
-                      <span className="text-green-500">$</span>
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={command}
-                        onChange={(e) => setCommand(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleCommand()}
-                        className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-                        placeholder="type a command..."
-                        title="Enter a terminal-style command"
-                        autoFocus
-                      />
-                    </div>
-                  )}
+                  {/* Command input is always inside the terminal */}
+                  <div className="mt-4 flex items-center gap-2">
+                    <span className="text-green-500">$</span>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={command}
+                      onChange={(e) => setCommand(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleCommand()}
+                      className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+                      placeholder={animatedOutput.length > 0 ? "waiting for output to finish..." : "type a command..."}
+                      title="Enter a terminal-style command"
+                      disabled={animatedOutput.length > 0}
+                      autoFocus
+                    />
+                  </div>
                 </>
               )}
               {chatMode && (
@@ -428,9 +427,16 @@ export default function BioSite() {
                               initial={{ scale: 0.8, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               transition={{ type: "spring", stiffness: 300 }}
-                              onClick={() => handleReaction(log, emoji, setChatLog)}
-                              className={`text-sm hover:scale-110 transition-transform ${log.reaction === emoji ? 'bg-green-800 px-2 py-1 rounded-full' : ''}`}
-                              title="React with this emoji"
+                              onClick={() => {
+                                handleReaction(log, emoji, setChatLog);
+                                const el = document.getElementById(`react-${log.id}`);
+                                if (el) {
+                                  el.classList.add("hidden");
+                                  el.classList.remove("flex");
+                                }
+                              }}
+                              className={`text-sm hover:bg-green-700 px-2 py-1 rounded-full transition-all ${log.reaction === emoji ? 'bg-green-700 shadow-md' : 'bg-green-900/30'}`}
+                              title={`React with ${emoji}`}
                             >
                               {emoji}
                             </motion.button>
@@ -439,11 +445,18 @@ export default function BioSite() {
                             <motion.button
                               whileTap={{ scale: 0.9 }}
                               whileHover={{ scale: 1.1 }}
-                              onClick={() => handleReaction(log, log.reaction, setChatLog)}
-                              className="text-sm text-red-400 hover:text-red-600"
+                              onClick={() => {
+                                handleReaction(log, log.reaction, setChatLog);
+                                const el = document.getElementById(`react-${log.id}`);
+                                if (el) {
+                                  el.classList.add("hidden");
+                                  el.classList.remove("flex");
+                                }
+                              }}
+                              className="text-xs text-red-400 hover:text-red-600 bg-black/30 px-2 py-1 rounded-full"
                               title="Remove reaction"
                             >
-                              ❌
+                              Remove
                             </motion.button>
                           )}
                         </motion.div>
