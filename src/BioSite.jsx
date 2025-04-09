@@ -1,5 +1,3 @@
-// Firebase-integrated version with real-time global chat
-
 import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
@@ -262,11 +260,6 @@ export default function BioSite() {
             </div>
           )}
           <div className="space-y-3">
-            {/* Terminal Header */}
-            <div className="bg-black/40 border border-green-700 p-5 rounded-xl shadow-inner shadow-green-800/20 overflow-x-auto">
-              {/* Terminal header content can go here if needed */}
-            </div>
-
             {/* Terminal Output Panel with info about Abdallah */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-4 shadow-inner shadow-green-800/20 overflow-x-auto">
               <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
