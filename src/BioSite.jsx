@@ -58,19 +58,24 @@ const handleReaction = async (msg, emoji, setChatLog) => {
   try {
     const docRef = doc(db, 'chat', msg.id);
 
-    const newReaction =
-      msg.reaction === emoji ? "" : emoji; // Only remove if same emoji clicked
+    // Toggle reaction - if same emoji is clicked, remove it, otherwise set new emoji
+    const newReaction = msg.reaction === emoji ? "" : emoji;
 
+    // Update local state immediately for better UX
     setChatLog(prev =>
       prev.map(m => (m.id === msg.id ? { ...m, reaction: newReaction } : m))
     );
 
+    // Update in Firestore
     await updateDoc(docRef, { 
       reaction: newReaction,
       reactionTime: serverTimestamp()
     });
+    
+    console.log(`Reaction updated: ${emoji} for message ID ${msg.id}`);
   } catch (err) {
     console.error("❌ Failed to update reaction:", err);
+    alert("Failed to update reaction. Please try again.");
   }
 };
 
@@ -335,9 +340,11 @@ export default function BioSite() {
                     .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
                     .map((log, idx) => (
                       <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] mb-2 ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
-                        <p className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"} font-semibold`}>
-                          {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
-                          {log.user}
+                        <p className="font-semibold">
+                          <span className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"}`}>
+                            {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
+                          </span>
+                          <span className="text-white ml-1">{log.user}</span>
                           <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
                           {log.reaction && (
                             <motion.span
@@ -497,7 +504,10 @@ export default function BioSite() {
                           key={index}
                           className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
                         >
-                          <p className="text-green-100">
+                          <p className="text-white">
+                            <span className={msg.userName === "Abdallah" ? "text-yellow-400 font-bold" : "text-green-100"}>
+                              {msg.userName === "Abdallah" ? "🫅 Abdallah: " : ""}
+                            </span>
                             {msg.user} 
                             {msg.reaction && 
                               <span className='ml-2 bg-green-700 px-2 py-1 rounded-full'>{msg.reaction}</span>
