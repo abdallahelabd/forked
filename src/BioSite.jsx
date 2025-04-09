@@ -291,9 +291,16 @@ export default function BioSite() {
   {staticOutput.map((line, idx) => (
     <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
   ))}
-  {animatedOutput.map(}
-</div>
-  (line, idx) => (
+  {animatedOutput.map((line, idx) => (
+  <AnimatedLine
+    key={`animated-${idx}`}
+    text={line}
+    onComplete={(line) => {
+      setStaticOutput((prev) => [...prev, line]);
+      setAnimatedOutput([]);
+    }}
+  />
+))}</div>
     <AnimatedLine
       key={`animated-${idx}`}
       text={line}
