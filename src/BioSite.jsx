@@ -146,7 +146,15 @@ export default function BioSite() {
 
     const [baseCmd, ...args] = trimmed.split(" ");
 
-    if (chatMode && trimmed !== "exit") {
+    // Allow users to exit chat mode with "exit" or "quit" or "/exit" or "/quit"
+    if (chatMode && ["exit", "quit", "/exit", "/quit"].includes(trimmed.toLowerCase())) {
+      setChatMode(false);
+      setStaticOutput((prev) => [...prev, `$ ${trimmed}`, "Exited chat mode."]);
+      setCommand("");
+      return;
+    }
+
+    if (chatMode) {
       if (!isAdmin) {
         // Removed client-side time; using only serverTimestamp now
         const newMsg = {
@@ -177,12 +185,7 @@ export default function BioSite() {
       return;
     }
 
-    if (chatMode && trimmed === "exit") {
-      setChatMode(false);
-      setStaticOutput((prev) => [...prev, `$ ${trimmed}`, "Exited chat mode."]);
-      setCommand("");
-      return;
-    }
+    // This condition is now handled in the section above
 
     let result = [];
     switch (baseCmd) {
@@ -276,7 +279,7 @@ export default function BioSite() {
                 onChange={(e) => setCommand(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleCommand()}
                 className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-                placeholder={chatMode ? "type your message..." : "type a command..."}
+                placeholder={chatMode ? "type your message or 'exit' to quit chat mode..." : "type a command..."}
                 title={chatMode ? "Enter your chat message" : "Enter a terminal-style command"}
                 autoFocus
               />
@@ -301,16 +304,18 @@ export default function BioSite() {
             
             {chatMode && (
               <>
-                <button 
-                  onClick={() => {
-                    setChatMode(false);
-                    setStaticOutput((prev) => [...prev, "Exited chat mode."]);
-                  }}
-                  className="text-red-400 hover:text-red-600 mb-2 bg-black/40 border border-red-700 p-2 rounded-xl"
-                >
-                  Close Chat
-                </button>
-                <p className="text-green-400 font-bold text-sm">💬 Chat</p>
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-green-400 font-bold text-lg">💬 Chat Mode</p>
+                  <button 
+                    onClick={() => {
+                      setChatMode(false);
+                      setStaticOutput((prev) => [...prev, "Exited chat mode."]);
+                    }}
+                    className="text-white hover:text-red-200 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full flex items-center gap-2 font-bold shadow-lg transition-all duration-200"
+                  >
+                    <span>Exit Chat</span> ✕
+                  </button>
+                </div>
                 {chatLog
                   .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
                   .map((log, idx) => (
