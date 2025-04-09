@@ -274,21 +274,23 @@ export default function BioSite() {
               <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
             </div>
 
-            {/* Input box - MOVED HERE to be between the info and command output */}
-            <div className="mb-4 flex items-center gap-2 bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
-              <span className="text-green-500">{chatMode ? "💬" : "$"}</span>
-              <input
-                ref={inputRef}
-                type="text"
-                value={command}
-                onChange={(e) => setCommand(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCommand()}
-                className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-                placeholder={chatMode ? "type your message or 'exit' to quit chat mode..." : "type a command..."}
-                title={chatMode ? "Enter your chat message" : "Enter a terminal-style command"}
-                autoFocus
-              />
-            </div>
+            {/* Input box - Integrated into the chat box when in chat mode */}
+            {!chatMode && (
+              <div className="mb-4 flex items-center gap-2 bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
+                <span className="text-green-500">$</span>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={command}
+                  onChange={(e) => setCommand(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCommand()}
+                  className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+                  placeholder="type a command..."
+                  title="Enter a terminal-style command"
+                  autoFocus
+                />
+              </div>
+            )}
 
             {/* Terminal Command Output */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
@@ -327,89 +329,104 @@ export default function BioSite() {
                   </button>
                 </div>
                 
-                {/* Preview of user's message as they type */}
-                {command && (
-                  <div className="bg-green-900/20 text-left p-3 rounded-xl max-w-[80%] mb-4 border border-green-800">
-                    <p className="text-green-100 font-semibold">
-                      👤 You (typing): 
-                      <span className="text-white ml-2">{command}</span>
-                      <span className="animate-pulse ml-1">|</span>
-                    </p>
-                  </div>
-                )}
-                
-                {chatLog
-                  .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
-                  .map((log, idx) => (
-                    <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
-                      <p className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"} font-semibold`}>
-                        {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
-                        {log.user}
-                        <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
-                        {log.reaction && (
-                          <motion.span
-                            key={`${log.id}-${log.reaction}`}
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1.1, opacity: 1 }}
-                            transition={{ type: 'spring', stiffness: 400 }}
-                            whileHover={{ scale: 1.2 }}
-                            title={`Reaction: ${log.reaction}`}
-                            className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
-                          >
-                            {log.reaction}
-                          </motion.span>
-                        )}
-                        {log.userName === userName && log.seenByAdmin && (
-                          <span className="text-xs text-green-500 ml-2">✓ Seen by admin</span>
-                        )}
-                      </p>
-                      {log.userName !== userName && (
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          whileHover={{ scale: 1.1 }}
-                          onClick={() => {
-                            const el = document.getElementById(`react-${log.id}`);
-                            if (el) el.classList.toggle("hidden");
-                          }}
-                          className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
-                          title="React"
-                        >
-                          👍
-                        </motion.button>
-                      )}
-                      <motion.div
-                        id={`react-${log.id}`}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={false}
-                        className="hidden overflow-hidden flex gap-2 mt-1"
-                      >
-                        {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-                          <motion.button
-                            key={emoji}
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ type: "spring", stiffness: 300 }}
-                            onClick={() => handleReaction(log, emoji, setChatLog)}
-                            className={`text-sm hover:scale-110 transition-transform ${log.reaction === emoji ? 'bg-green-800 px-2 py-1 rounded-full' : ''}`}
-                            title="React with this emoji"
-                          >
-                            {emoji}
-                          </motion.button>
-                        ))}
-                        {log.reaction && (
+                {/* Chat messages display */}
+                <div className="mb-4 max-h-[50vh] overflow-y-auto">
+                  {chatLog
+                    .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
+                    .map((log, idx) => (
+                      <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] mb-2 ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
+                        <p className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"} font-semibold`}>
+                          {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
+                          {log.user}
+                          <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
+                          {log.reaction && (
+                            <motion.span
+                              key={`${log.id}-${log.reaction}`}
+                              initial={{ scale: 0.5, opacity: 0 }}
+                              animate={{ scale: 1.1, opacity: 1 }}
+                              transition={{ type: 'spring', stiffness: 400 }}
+                              whileHover={{ scale: 1.2 }}
+                              title={`Reaction: ${log.reaction}`}
+                              className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
+                            >
+                              {log.reaction}
+                            </motion.span>
+                          )}
+                          {log.userName === userName && log.seenByAdmin && (
+                            <span className="text-xs text-green-500 ml-2">✓ Seen by admin</span>
+                          )}
+                        </p>
+                        {log.userName !== userName && (
                           <motion.button
                             whileTap={{ scale: 0.9 }}
                             whileHover={{ scale: 1.1 }}
-                            onClick={() => handleReaction(log, log.reaction, setChatLog)}
-                            className="text-sm text-red-400 hover:text-red-600"
-                            title="Remove reaction"
+                            onClick={() => {
+                              const el = document.getElementById(`react-${log.id}`);
+                              if (el) el.classList.toggle("hidden");
+                            }}
+                            className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
+                            title="React"
                           >
-                            ❌
+                            👍
                           </motion.button>
                         )}
-                      </motion.div>
-                    </div>
-                  ))}
+                        <motion.div
+                          id={`react-${log.id}`}
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={false}
+                          className="hidden overflow-hidden flex gap-2 mt-1"
+                        >
+                          {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                            <motion.button
+                              key={emoji}
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: "spring", stiffness: 300 }}
+                              onClick={() => handleReaction(log, emoji, setChatLog)}
+                              className={`text-sm hover:scale-110 transition-transform ${log.reaction === emoji ? 'bg-green-800 px-2 py-1 rounded-full' : ''}`}
+                              title="React with this emoji"
+                            >
+                              {emoji}
+                            </motion.button>
+                          ))}
+                          {log.reaction && (
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              whileHover={{ scale: 1.1 }}
+                              onClick={() => handleReaction(log, log.reaction, setChatLog)}
+                              className="text-sm text-red-400 hover:text-red-600"
+                              title="Remove reaction"
+                            >
+                              ❌
+                            </motion.button>
+                          )}
+                        </motion.div>
+                      </div>
+                    ))}
+                </div>
+
+                {/* Integrated input in chat box */}
+                <div className="flex items-center gap-2 bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
+                  <span className="text-green-500">💬</span>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={command}
+                    onChange={(e) => setCommand(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleCommand()}
+                    className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+                    placeholder="Type your message or 'exit' to quit chat mode..."
+                    title="Enter your chat message"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleCommand}
+                    disabled={!command.trim()}
+                    className={`px-3 py-1 rounded-full text-sm font-bold ${command.trim() ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer' : 'bg-green-900 text-green-700 cursor-not-allowed'}`}
+                  >
+                    Send
+                  </button>
+                </div>
                 <div ref={outputRef} />
               </div>
             )}
