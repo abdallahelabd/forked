@@ -585,6 +585,7 @@ export default function BioSite() {
   );
 }
 
+// AnimatedLine Component
 const AnimatedLine = ({ text, onComplete }) => {
   const [displayedText, setDisplayedText] = useState("");
 
@@ -600,12 +601,12 @@ const AnimatedLine = ({ text, onComplete }) => {
       } else {
         clearInterval(interval);
         if (onComplete && typeof text === "string") {
-          setTimeout(() => onComplete(text + ""), 0);
+          setTimeout(() => onComplete(text), 0);
         }
       }
     }, 15);
     return () => clearInterval(interval);
-  }, [text]);
+  }, [text, onComplete]);
 
   const isHtml = /<[^>]+>/.test(text);
   return isHtml ? (
@@ -614,3 +615,6 @@ const AnimatedLine = ({ text, onComplete }) => {
     <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
   );
 };
+
+// Export the main component
+export default BioSite;
