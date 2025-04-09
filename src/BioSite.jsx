@@ -262,272 +262,260 @@ export default function BioSite() {
             </div>
           )}
           <div className="space-y-3">
-  {/* Terminal Header */}
-  <div className="bg-black/40 border border-green-700 p-5 rounded-xl shadow-inner shadow-green-800/20 overflow-x-auto">
-    
-  </div>
+            {/* Terminal Header */}
+            <div className="bg-black/40 border border-green-700 p-5 rounded-xl shadow-inner shadow-green-800/20 overflow-x-auto">
+              
+            </div>
 
-  {/* Input box */}
-  <div className="mb-4 flex items-center gap-2">
-  <span className="text-green-500">$</span>
-  <input
-    ref={inputRef}
-    type="text"
-    value={command}
-    onChange={(e) => setCommand(e.target.value)}
-    onKeyDown={(e) => e.key === "Enter" && handleCommand()}
-    className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-    placeholder={chatMode ? "type your message..." : "type a command..."}
-    title={chatMode ? "Enter your chat message" : "Enter a terminal-style command"}
-    autoFocus
-  />
-</div>
+            {/* Input box */}
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-green-500">$</span>
+              <input
+                ref={inputRef}
+                type="text"
+                value={command}
+                onChange={(e) => setCommand(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCommand()}
+                className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+                placeholder={chatMode ? "type your message..." : "type a command..."}
+                title={chatMode ? "Enter your chat message" : "Enter a terminal-style command"}
+                autoFocus
+              />
+            </div>
             {/* Terminal Output Panel with custom styling */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-4 shadow-inner shadow-green-800/20 overflow-x-auto">
-  <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
-  <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
-</div>
-<div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
-  {staticOutput.map((line, idx) => (
-    <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
-  ))}
-  {animatedOutput.map((line, idx) => (
-  <AnimatedLine
-    key={`animated-${idx}`}
-    text={line}
-    onComplete={(line) => {
-      setStaticOutput((prev) => [...prev, line]);
-      setAnimatedOutput([]);
-    }}
-  />
-))}</div>
-    <AnimatedLine
-      key={`animated-${idx}`}
-      text={line}
-      onComplete={(line) => {
-        setStaticOutput((prev) => [...prev, line]);
-        setAnimatedOutput([]);
-      }}
-    />
-  ))}
-</div>
+              <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
+              <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
+            </div>
+            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
+              {staticOutput.map((line, idx) => (
+                <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
+              ))}
+              {animatedOutput.map((line, idx) => (
+                <AnimatedLine
+                  key={`animated-${idx}`}
+                  text={line}
+                  onComplete={(line) => {
+                    setStaticOutput((prev) => [...prev, line]);
+                    setAnimatedOutput([]);
+                  }}
+                />
+              ))}
+            </div>
             
             {chatMode && (
-  <>
-    <p className="text-green-400 font-bold text-sm">💬 Chat</p>
-    {chatLog
-      .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
-      .map((log, idx) => (
-        <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
-          <p className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"} font-semibold`}>
-              {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
-            {log.user}
-            <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
-            {log.reaction && (
-              <motion.span
-                key={`${log.id}-${log.reaction}`}
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1.1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 400 }}
-                whileHover={{ scale: 1.2 }}
-                title={`Reaction: ${log.reaction}`}
-                className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
-              >
-                {log.reaction}
-              </motion.span>
+              <>
+                <p className="text-green-400 font-bold text-sm">💬 Chat</p>
+                {chatLog
+                  .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
+                  .map((log, idx) => (
+                    <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
+                      <p className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"} font-semibold`}>
+                        {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
+                        {log.user}
+                        <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
+                        {log.reaction && (
+                          <motion.span
+                            key={`${log.id}-${log.reaction}`}
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1.1, opacity: 1 }}
+                            transition={{ type: 'spring', stiffness: 400 }}
+                            whileHover={{ scale: 1.2 }}
+                            title={`Reaction: ${log.reaction}`}
+                            className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
+                          >
+                            {log.reaction}
+                          </motion.span>
+                        )}
+                      </p>
+                      {log.userName !== userName && (
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          whileHover={{ scale: 1.1 }}
+                          onClick={() => {
+                            const el = document.getElementById(`react-${log.id}`);
+                            if (el) el.classList.toggle("hidden");
+                          }}
+                          className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
+                          title="React"
+                        >
+                          👍
+                        </motion.button>
+                      )}
+                      <motion.div
+                        id={`react-${log.id}`}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={false}
+                        className="hidden overflow-hidden flex gap-2 mt-1"
+                      >
+                        {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                          <motion.button
+                            key={emoji}
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 300 }}
+                            onClick={() => handleReaction(log, emoji, setChatLog)}
+                            className="text-sm hover:scale-110 transition-transform"
+                            title="React with this emoji"
+                          >
+                            {emoji}
+                          </motion.button>
+                        ))}
+                        {log.reaction && (
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.1 }}
+                            onClick={() => handleReaction(log, log.reaction, setChatLog)}
+                            className="text-sm text-red-400 hover:text-red-600"
+                            title="Remove reaction"
+                          >
+                            ❌
+                          </motion.button>
+                        )}
+                      </motion.div>
+                    </div>
+                  ))}
+                <div ref={outputRef} />
+              </>
             )}
-          </p>
-          {log.userName !== userName && (
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              whileHover={{ scale: 1.1 }}
-              onClick={() => {
-                const el = document.getElementById(`react-${log.id}`);
-                if (el) el.classList.toggle("hidden");
-              }}
-              className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
-              title="React"
-            >
-              👍
-            </motion.button>
-          )}
-          <motion.div
-            id={`react-${log.id}`}
-            initial={{ opacity: 0, height: 0 }}
-            animate={false}
-            className="hidden overflow-hidden flex gap-2 mt-1"
-          >
-            {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-              <motion.button
-                key={emoji}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 300 }}
-                onClick={() => handleReaction(log, emoji, setChatLog)}
-                className="text-sm hover:scale-110 transition-transform"
-                title="React with this emoji"
-              >
-                {emoji}
-              </motion.button>
-            ))}
-            {log.reaction && (
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                whileHover={{ scale: 1.1 }}
-                onClick={() => handleReaction(log, log.reaction, setChatLog)}
-                className="text-sm text-red-400 hover:text-red-600"
-                title="Remove reaction"
-              >
-                ❌
-              </motion.button>
-            )}
-          </motion.div>
-        </div>
-      ))}
-        <div ref={outputRef} />
-  </>
-)}
           </div>
-
-          
 
           <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
         </motion.div>
-        </section>
-        {isAdmin && (
-  <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
-    <button
-      className="sm:hidden block mb-2 text-green-400 underline"
-      onClick={() => setAdminPanelOpen(!adminPanelOpen)}
-    >
-      {adminPanelOpen ? "Hide Admin Panel" : "Show Admin Panel"}
-    </button>
-    {(adminPanelOpen || window.innerWidth >= 640) && (
-      <div className="flex flex-col h-full">
-        <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
-        <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
+      </section>
+      {isAdmin && (
+        <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
+          <button
+            className="sm:hidden block mb-2 text-green-400 underline"
+            onClick={() => setAdminPanelOpen(!adminPanelOpen)}
+          >
+            {adminPanelOpen ? "Hide Admin Panel" : "Show Admin Panel"}
+          </button>
+          {(adminPanelOpen || window.innerWidth >= 640) && (
+            <div className="flex flex-col h-full">
+              <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
+              <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
 
-        <div className="flex-1 overflow-y-auto space-y-4 mt-3">
-          {Object.entries(
-            chatLog.reduce((acc, msg) => {
-              const otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
-              if (!acc[otherUser]) acc[otherUser] = [];
-              acc[otherUser].push(msg);
-              return acc;
-            }, {})
-          ).map(([participant, messages]) => (
-            <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
-              <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
+              <div className="flex-1 overflow-y-auto space-y-4 mt-3">
+                {Object.entries(
+                  chatLog.reduce((acc, msg) => {
+                    const otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
+                    if (!acc[otherUser]) acc[otherUser] = [];
+                    acc[otherUser].push(msg);
+                    return acc;
+                  }, {})
+                ).map(([participant, messages]) => (
+                  <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
+                    <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
 
-              <button
-                className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
-                onClick={async () => {
-                  const confirmClear = window.confirm(`Clear conversation with ${participant}?`);
-                  if (!confirmClear) return;
-                  const idsToDelete = messages.map((m) => m.id);
-                  for (const id of idsToDelete) {
-                    await deleteDoc(doc(db, "chat", id));
-                  }
-                }}
-              >
-                🗑 Clear conversation
-              </button>
+                    <button
+                      className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
+                      onClick={async () => {
+                        const confirmClear = window.confirm(`Clear conversation with ${participant}?`);
+                        if (!confirmClear) return;
+                        const idsToDelete = messages.map((m) => m.id);
+                        for (const id of idsToDelete) {
+                          await deleteDoc(doc(db, "chat", id));
+                        }
+                      }}
+                    >
+                      🗑 Clear conversation
+                    </button>
 
-              <ul className="space-y-2 text-sm">
-                {messages.map((msg, index) => (
-                  <li
-                    key={index}
-                    className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
-                  >
-                    <p className="text-green-100">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}</p>
-                    <div className="flex gap-2 mt-1">
-                      {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-    <motion.button
-  initial={{ scale: 0.8, opacity: 0 }}
-  animate={{ scale: 1, opacity: 1 }}
-  transition={{ type: "spring", stiffness: 300 }}
-  key={emoji}
-  onClick={() => handleReaction(log, emoji, setChatLog)}
-  className="text-sm hover:scale-110 transition-transform"
-  title="React with this emoji"
->
-  {emoji}
-</motion.button>
+                    <ul className="space-y-2 text-sm">
+                      {messages.map((msg, index) => (
+                        <li
+                          key={index}
+                          className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
+                        >
+                          <p className="text-green-100">{msg.user} {msg.reaction && <span className='ml-2'>{msg.reaction}</span>}</p>
+                          <div className="flex gap-2 mt-1">
+                            {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                              <motion.button
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                                key={emoji}
+                                onClick={() => handleReaction(msg, emoji, setChatLog)}
+                                className="text-sm hover:scale-110 transition-transform"
+                                title="React with this emoji"
+                              >
+                                {emoji}
+                              </motion.button>
+                            ))}
+                          </div>
+                          {isAdmin && (
+                            <button
+                              className="text-xs text-red-400 mt-1 hover:text-red-600"
+                              onClick={async () => {
+                                const confirmDelete = window.confirm("Delete this message?");
+                                if (confirmDelete) {
+                                  await deleteDoc(doc(db, 'chat', msg.id));
+                                }
+                              }}
+                            >
+                              🗑 Delete
+                            </button>
+                          )}
+                          <span className="block text-xs text-green-500 mt-1">{msg.timestamp?.toDate && new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
+                          {msg.userName === "Abdallah" && (
+                            <span className="block text-[10px] text-green-400 mt-0.5">
+                              {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
+                            </span>
+                          )}
+                        </li>
                       ))}
-                    </div>
-                    {isAdmin && (
+                    </ul>
+
+                    <form
+                      className="mt-3 flex gap-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const input = e.target.elements[`reply-${participant}`];
+                        const message = input.value.trim();
+                        if (!message) return;
+                        const time = new Date().toLocaleTimeString();
+                        await addDoc(chatCollection, {
+                          user: message,
+                          recipient: participant,
+                          userName: "Abdallah",
+                          time,
+                          timestamp: serverTimestamp(),
+                          seenByUser: false
+                        });
+                        input.value = "";
+                        try {
+                          await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+                            user_name: "Abdallah",
+                            message,
+                            to_email: "abdallahelabd05@gmail.com"
+                          }, "vhPVKbLsc89CisiWl");
+                        } catch (error) {
+                          console.error("Email failed:", error);
+                        }
+                      }}
+                    >
+                      <input
+                        type="text"
+                        name={`reply-${participant}`}
+                        placeholder={`Reply to ${participant}...`}
+                        className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
+                      />
                       <button
-                        className="text-xs text-red-400 mt-1 hover:text-red-600"
-                        onClick={async () => {
-                          const confirmDelete = window.confirm("Delete this message?");
-                          if (confirmDelete) {
-                            await deleteDoc(doc(db, 'chat', msg.id));
-                          }
-                        }}
+                        type="submit"
+                        className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
                       >
-                        🗑 Delete
+                        Send
                       </button>
-                    )}
-                    <span className="block text-xs text-green-500 mt-1">{msg.timestamp?.toDate && new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
-                    {msg.userName === "Abdallah" && (
-                      <span className="block text-[10px] text-green-400 mt-0.5">
-                        {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
-                      </span>
-                    )}
-                  </li>
+                    </form>
+                  </div>
                 ))}
-              </ul>
-
-              <form
-                className="mt-3 flex gap-2"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const input = e.target.elements[`reply-${participant}`];
-                  const message = input.value.trim();
-                  if (!message) return;
-                  const time = new Date().toLocaleTimeString();
-                  await addDoc(chatCollection, {
-                    user: message,
-                    recipient: participant,
-                    userName: "Abdallah",
-                    time,
-                    timestamp: serverTimestamp(),
-                    seenByUser: false
-                  });
-                  input.value = "";
-                  try {
-                    await emailjs.send("service_2fdtfyg", "template_btw21b8", {
-                      user_name: "Abdallah",
-                      message,
-                      to_email: "abdallahelabd05@gmail.com"
-                    }, "vhPVKbLsc89CisiWl");
-                  } catch (error) {
-                    console.error("Email failed:", error);
-                  }
-                }}
-              >
-                <input
-                  type="text"
-                  name={`reply-${participant}`}
-                  placeholder={`Reply to ${participant}...`}
-                  className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
-                >
-                  Send
-                </button>
-              </form>
+              </div>
             </div>
-          ))}
+          )}
         </div>
+      )}
       </div>
-    )}
-  </div>
-)}
-
-            </div>
     </main>
   );
 }
