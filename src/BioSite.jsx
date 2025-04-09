@@ -299,19 +299,41 @@ export default function BioSite() {
 
             {/* Terminal Command Output */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
-              {!chatMode && staticOutput.map((line, idx) => (
-                <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
-              ))}
-              {!chatMode && animatedOutput.map((line, idx) => (
-                <AnimatedLine
-                  key={`animated-${idx}`}
-                  text={line}
-                  onComplete={(line) => {
-                    setStaticOutput((prev) => [...prev, line]);
-                    setAnimatedOutput([]);
-                  }}
-                />
-              ))}
+              {!chatMode && (
+                <>
+                  {staticOutput.map((line, idx) => (
+                    <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
+                  ))}
+                  {animatedOutput.map((line, idx) => (
+                    <AnimatedLine
+                      key={`animated-${idx}`}
+                      text={line}
+                      onComplete={(line) => {
+                        setStaticOutput((prev) => [...prev, line]);
+                        setAnimatedOutput([]);
+                      }}
+                    />
+                  ))}
+                  
+                  {/* Command input moves inside the terminal output when not in chat mode */}
+                  {!animatedOutput.length > 0 && (
+                    <div className="mt-4 flex items-center gap-2">
+                      <span className="text-green-500">$</span>
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={command}
+                        onChange={(e) => setCommand(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleCommand()}
+                        className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+                        placeholder="type a command..."
+                        title="Enter a terminal-style command"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </>
+              )}
               {chatMode && (
                 <p className="text-green-300 mb-3">
                   <span className="text-yellow-300 font-bold">Chat mode active.</span> Type a message below to chat with Abdallah. Type 'exit' to return to command mode.
