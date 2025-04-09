@@ -83,6 +83,31 @@ export default function BioSite() {
   const [booting, setBooting] = useState(true);
   const [chatLog, setChatLog] = useState([]);
   const [userName, setUserName] = useState(() => {
+    if (!text) return;
+    let i = 0;
+    const stripped = text.replace(/<[^>]+>/g, "");
+    const chars = [...stripped];
+    const interval = setInterval(() => {
+      if (i < chars.length) {
+        setDisplayedText((prev) => prev + chars[i]);
+        i++;
+      } else {
+        clearInterval(interval);
+        if (onComplete && typeof text === "string") {
+          setTimeout(() => onComplete(text + ""), 0);
+        }
+      }
+    }, 15);
+    return () => clearInterval(interval);
+  }, [text]);
+
+  const isHtml = /<[^>]+>/.test(text);
+  return isHtml ? (
+    <pre dangerouslySetInnerHTML={{ __html: text }} />
+  ) : (
+    <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
+  );
+};
     const stored = localStorage.getItem("userName");
     if (stored) return stored;
     const generated = "User" + Math.floor(Math.random() * 1000);
