@@ -369,6 +369,8 @@ export default function BioSite() {
                             <span className="text-xs text-gray-400 ml-2">✓ Sent</span>
                           )}
                         </p>
+                        
+                        {/* Only show reaction button for messages from other users, not the user's own messages */}
                         {log.userName !== userName && (
                           <motion.button
                             whileTap={{ scale: 0.9 }}
