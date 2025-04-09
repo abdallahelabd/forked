@@ -300,12 +300,7 @@ export default function BioSite() {
     />
   ))}
 </div>
-  {staticOutput.map((line, idx) => (
-    line !== "Abdallah Elabd 💚" && line !== "Twitter: @abdallahelabd05" && (
-      <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
-    )
-  ))}
-  {animatedOutput.map((line, idx) => (
+  (line, idx) => (
     <AnimatedLine
       key={`animated-${idx}`}
       text={line}
