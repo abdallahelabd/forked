@@ -384,10 +384,9 @@ export default function BioSite() {
           </motion.div>
         </div>
       ))}
-{/*     <div ref={outputRef} />
-  </> */}
+    <div ref={outputRef} >
+           </div>
 )}
-          </div>
 
           
 
