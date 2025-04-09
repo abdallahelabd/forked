@@ -353,28 +353,45 @@ export default function BioSite() {
                             </motion.span>
                           )}
                           {log.userName === userName && log.seenByAdmin && (
-                            <span className="text-xs text-green-500 ml-2">✓ Seen by admin</span>
+                            <span className="text-xs text-green-500 ml-2">✓✓ Seen</span>
+                          )}
+                          {log.userName === userName && !log.seenByAdmin && (
+                            <span className="text-xs text-gray-400 ml-2">✓ Sent</span>
                           )}
                         </p>
                         {log.userName !== userName && (
-                          <motion.button
-                            whileTap={{ scale: 0.9 }}
-                            whileHover={{ scale: 1.1 }}
-                            onClick={() => {
-                              const el = document.getElementById(`react-${log.id}`);
-                              if (el) el.classList.toggle("hidden");
-                            }}
-                            className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
-                            title="React"
-                          >
-                            👍
-                          </motion.button>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <p className="text-xs text-green-300 mr-1">React:</p>
+                            {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                              <motion.button
+                                key={emoji}
+                                whileTap={{ scale: 0.9 }}
+                                whileHover={{ scale: 1.1 }}
+                                onClick={() => handleReaction(log, emoji, setChatLog)}
+                                className={`text-sm hover:bg-green-700 px-2 py-1 rounded-full transition-all ${log.reaction === emoji ? 'bg-green-700 shadow-md' : 'bg-green-900/30'}`}
+                                title={`React with ${emoji}`}
+                              >
+                                {emoji}
+                              </motion.button>
+                            ))}
+                            {log.reaction && (
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                whileHover={{ scale: 1.1 }}
+                                onClick={() => handleReaction(log, log.reaction, setChatLog)}
+                                className="text-xs text-red-400 hover:text-red-600 bg-black/30 px-2 py-1 rounded-full"
+                                title="Remove reaction"
+                              >
+                                Remove
+                              </motion.button>
+                            )}
+                          </div>
                         )}
                         <motion.div
                           id={`react-${log.id}`}
                           initial={{ opacity: 0, height: 0 }}
-                          animate={false}
-                          className="hidden overflow-hidden flex gap-2 mt-1"
+                          animate={{ opacity: 1, height: "auto" }}
+                          className="flex gap-2 mt-1"
                         >
                           {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
                             <motion.button
@@ -517,7 +534,7 @@ export default function BioSite() {
                           <span className="block text-xs text-green-500 mt-1">{msg.timestamp?.toDate && new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
                           {msg.userName === "Abdallah" && (
                             <span className="block text-[10px] text-green-400 mt-0.5">
-                              {msg.seenByUser ? `Seen at ${msg.seenTime || '✓✓'}` : "Sent ✓"}
+                              {msg.seenByUser ? `✓✓ Seen ${msg.seenTime ? 'at ' + msg.seenTime : ''}` : "✓ Sent"}
                             </span>
                           )}
                         </li>
