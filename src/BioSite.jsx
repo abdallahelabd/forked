@@ -45,6 +45,15 @@ function PinnedCommands({ setCommand, inputRef }) {
       <p className="text-green-300 text-xl mb-3 font-bold underline">Pinned Commands</p>
       <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
         {pinnedCommands.map((cmd) => (
+          <button
+            key={cmd}
+            onClick={() => {
+              setCommand(cmd);
+              inputRef.current?.focus();
+            }}
+            className="px-5 py-2.5 bg-green-500 text-black font-bold rounded-full shadow-lg hover:bg-green-400 hover:scale-105 transition-all duration-200 tracking-wide text-lg"
+          >
+            {cmd}
           </button>
           {(adminPanelOpen || window.innerWidth >= 640) && (
             <div className="flex flex-col h-full">
