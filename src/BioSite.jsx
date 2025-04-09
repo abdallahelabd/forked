@@ -1,4 +1,32 @@
-// Firebase-integrated version with real-time global chat
+const AnimatedLine = ({ text, onComplete }) => {
+  const [displayedText, setDisplayedText] = useState("");
+
+  useEffect(() => {
+    if (!text) return;
+    let i = 0;
+    const stripped = text.replace(/<[^>]+>/g, "");
+    const chars = [...stripped];
+    const interval = setInterval(() => {
+      if (i < chars.length) {
+        setDisplayedText((prev) => prev + chars[i]);
+        i++;
+      } else {
+        clearInterval(interval);
+        if (onComplete && typeof text === "string") {
+          setTimeout(() => onComplete(text + ""), 0);
+        }
+      }
+    }, 15);
+    return () => clearInterval(interval);
+  }, [text, onComplete]);
+
+  const isHtml = /<[^>]+>/.test(text);
+  return isHtml ? (
+    <pre dangerouslySetInnerHTML={{ __html: text }} />
+  ) : (
+    <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
+  );
+};// Firebase-integrated version with real-time global chat
 
 import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
