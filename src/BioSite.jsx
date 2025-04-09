@@ -261,8 +261,7 @@ export default function BioSite() {
           <div className="space-y-3">
   {/* Terminal Header */}
   <div className="bg-black/40 border border-green-700 p-5 rounded-xl shadow-inner shadow-green-800/20 overflow-x-auto">
-    <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
-    <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
+    
   </div>
 
   {/* Input box */}
@@ -289,7 +288,16 @@ export default function BioSite() {
   {staticOutput.map((line, idx) => (
     <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
   ))}
-  {animatedOutput.map(
+  {animatedOutput.map((line, idx) => (
+  <AnimatedLine
+    key={`animated-${idx}`}
+    text={line}
+    onComplete={(line) => {
+      setStaticOutput((prev) => [...prev, line]);
+      setAnimatedOutput([]);
+    }}
+  />
+))}
 </div>
   (line, idx) => (
     <AnimatedLine
