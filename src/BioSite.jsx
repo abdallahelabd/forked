@@ -308,6 +308,15 @@ export default function BioSite() {
             
             {chatMode && (
               <>
+                <button 
+                  onClick={() => {
+                    setChatMode(false);
+                    setStaticOutput((prev) => [...prev, "Exited chat mode."]);
+                  }}
+                  className="text-red-400 hover:text-red-600 mb-2 bg-black/40 border border-red-700 p-2 rounded-xl"
+                >
+                  Close Chat
+                </button>
                 <p className="text-green-400 font-bold text-sm">💬 Chat</p>
                 {chatLog
                   .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
