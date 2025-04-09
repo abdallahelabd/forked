@@ -96,9 +96,9 @@ export default function BioSite() {
     const q = query(chatCollection, orderBy("timestamp"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setChatLog(messages);
-
+      
       if (!isAdmin) {
+        // Mark messages as seen by user
         messages
           .filter((msg) => msg.recipient === userName && !msg.seenByUser)
           .forEach((msg) => {
@@ -111,6 +111,7 @@ export default function BioSite() {
       }
 
       if (isAdmin) {
+        // Mark messages as seen by admin
         messages
           .filter((msg) => !msg.seenByAdmin && msg.userName !== "Abdallah")
           .forEach((msg) => {
@@ -120,6 +121,7 @@ export default function BioSite() {
       }
 
       setChatLog(messages);
+    });
     });
 
     return () => unsubscribe();
@@ -336,6 +338,9 @@ export default function BioSite() {
                           >
                             {log.reaction}
                           </motion.span>
+                        )}
+                        {log.userName === userName && log.seenByAdmin && (
+                          <span className="text-xs text-green-500 ml-2">✓ Seen by admin</span>
                         )}
                       </p>
                       {log.userName !== userName && (
