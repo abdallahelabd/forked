@@ -125,12 +125,11 @@ export default function BioSite() {
 
       setChatLog(messages);
     });
-    });
 
     return () => unsubscribe();
   }, [isAdmin, userName, adminPanelOpen]);
 
- useEffect(() => {
+  useEffect(() => {
     const scrollToBottom = setTimeout(() => {
       outputRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
@@ -338,6 +337,7 @@ export default function BioSite() {
                     </p>
                   </div>
                 )}
+                
                 {chatLog
                   .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
                   .map((log, idx) => (
