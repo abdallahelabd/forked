@@ -264,11 +264,17 @@ export default function BioSite() {
           <div className="space-y-3">
             {/* Terminal Header */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl shadow-inner shadow-green-800/20 overflow-x-auto">
-              
+              {/* Terminal header content can go here if needed */}
             </div>
 
-            {/* Input box */}
-            <div className="mb-4 flex items-center gap-2">
+            {/* Terminal Output Panel with info about Abdallah */}
+            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-4 shadow-inner shadow-green-800/20 overflow-x-auto">
+              <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
+              <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
+            </div>
+
+            {/* Input box - MOVED HERE to be between the info and command output */}
+            <div className="mb-4 flex items-center gap-2 bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
               <span className="text-green-500">$</span>
               <input
                 ref={inputRef}
@@ -282,11 +288,8 @@ export default function BioSite() {
                 autoFocus
               />
             </div>
-            {/* Terminal Output Panel with custom styling */}
-            <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-4 shadow-inner shadow-green-800/20 overflow-x-auto">
-              <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
-              <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
-            </div>
+
+            {/* Terminal Command Output */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
               {staticOutput.map((line, idx) => (
                 <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
