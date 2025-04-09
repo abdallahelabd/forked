@@ -396,29 +396,40 @@ export default function BioSite() {
                           </motion.button>
                         )}
                         
-                        {/* Show "Change" button if user has already reacted */}
+                        {/* Show reaction controls if user has already reacted */}
                         {log.userName !== userName && log.reaction && (
-                          <motion.button
-                            whileTap={{ scale: 0.9 }}
-                            whileHover={{ scale: 1.1 }}
-                            onClick={() => {
-                              const el = document.getElementById(`react-${log.id}`);
-                              if (el) {
-                                // Toggle the reaction menu
-                                if (el.classList.contains("hidden")) {
-                                  el.classList.remove("hidden");
-                                  el.classList.add("flex");
-                                } else {
-                                  el.classList.add("hidden");
-                                  el.classList.remove("flex");
+                          <div className="flex gap-2 mt-1">
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              whileHover={{ scale: 1.1 }}
+                              onClick={() => {
+                                const el = document.getElementById(`react-${log.id}`);
+                                if (el) {
+                                  // Toggle the reaction menu
+                                  if (el.classList.contains("hidden")) {
+                                    el.classList.remove("hidden");
+                                    el.classList.add("flex");
+                                  } else {
+                                    el.classList.add("hidden");
+                                    el.classList.remove("flex");
+                                  }
                                 }
-                              }
-                            }}
-                            className="ml-2 text-xs bg-green-900 text-green-300 px-2 py-1 rounded-full hover:shadow-md"
-                            title="Change reaction"
-                          >
-                            Change
-                          </motion.button>
+                              }}
+                              className="text-xs bg-green-900 text-green-300 px-2 py-1 rounded-full hover:shadow-md"
+                              title="Change reaction"
+                            >
+                              Change
+                            </motion.button>
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              whileHover={{ scale: 1.1 }}
+                              onClick={() => handleReaction(log, log.reaction, setChatLog)}
+                              className="text-xs bg-red-900/70 text-red-300 px-2 py-1 rounded-full hover:shadow-md hover:bg-red-900"
+                              title="Remove reaction"
+                            >
+                              Remove
+                            </motion.button>
+                          </div>
                         )}
                         
                         <motion.div
