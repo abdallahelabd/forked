@@ -277,11 +277,11 @@ export default function BioSite() {
         try {
           if (userName !== "Abdallah") {
             // Only send email notifications for messages from regular users, not from admin
-            await emailjs.send("service_2fdtfyg", "template_btw21b8", {
+            await emailjs.send("service_vjg01x9", "template_venfmmq", {
               user_name: userName,
               message: trimmed,
               to_email: "abdallahelabd05@gmail.com"
-            }, "vhPVKbLsc89CisiWl");
+            }, "iqh5uRT5wWx4PA9DC");
           }
         } catch (error) {
           console.error("❌ Email failed:", error);
@@ -475,6 +475,239 @@ export default function BioSite() {
                       value={command}
                       onChange={(e) => setCommand(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleCommand()}
+                      className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+                      placeholder={animatedOutput.length > 0 ? "waiting for output to finish..." : "type a command..."}
+                      title="Enter a terminal-style command"
+                      disabled={animatedOutput.length > 0}
+                      autoFocus
+                    />
+                  </div>
+                </>
+              )}
+              {chatMode && (
+                <p className="text-green-300 mb-3">
+                  <span className="text-yellow-300 font-bold">Chat mode active.</span> Type a message below to chat with Abdallah. Type 'exit' to return to command mode.
+                </p>
+              )}
+            </div>
+            
+            {chatMode && (
+              <div className="bg-black/30 border border-green-600 rounded-xl p-4 shadow-lg">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-green-400 font-bold text-lg">💬 Chat Mode</p>
+                  <button 
+                    onClick={() => {
+                      setChatMode(false);
+                      setStaticOutput((prev) => [...prev, "Exited chat mode."]);
+                      clearImageSelection();
+                    }}
+                    className="text-white hover:text-red-200 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full flex items-center gap-2 font-bold shadow-lg transition-all duration-200"
+                  >
+                    <span>Exit Chat</span> ✕
+                  </button>
+                </div>
+                
+                {/* Chat messages display */}
+                <div className="mb-4 max-h-[50vh] overflow-y-auto">
+                  {chatLog
+                    .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
+                    .map((log, idx) => (
+                      <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] mb-2 ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
+                        <p className="font-semibold">
+                          <span className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"}`}>
+                            {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
+                          </span>
+                          <span className="text-white ml-1">{log.user}</span>
+                          <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
+                          {log.reaction && (
+                            <motion.span
+                              key={`${log.id}-${log.reaction}`}
+                              initial={{ scale: 0.5, opacity: 0 }}
+                              animate={{ scale: 1.1, opacity: 1 }}
+                              transition={{ type: 'spring', stiffness: 400 }}
+                              whileHover={{ scale: 1.2 }}
+                              title={`Reaction: ${log.reaction}`}
+                              className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
+                            >
+                              {log.reaction}
+                            </motion.span>
+                          )}
+                          {log.userName === userName && log.seenByAdmin && (
+                            <span className="text-xs text-green-500 ml-2">✓✓ Seen</span>
+                          )}
+                          {log.userName === userName && !log.seenByAdmin && (
+                            <span className="text-xs text-gray-400 ml-2">✓ Sent</span>
+                          )}
+                        </p>
+                        
+                        {/* Display attached image if any */}
+                        {log.imageUrl && (
+                          <div className={`mt-2 ${log.userName === "Abdallah" ? "ml-auto" : "mr-auto"}`}>
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <img 
+                                src={log.imageUrl} 
+                                alt="Attached" 
+                                className="rounded-lg border-2 border-green-600 max-w-full max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => window.open(log.imageUrl, '_blank')}
+                              />
+                            </motion.div>
+                          </div>
+                        )}
+                        
+                        {/* Only show reaction button for messages from other users, not the user's own messages,
+                          and hide the button if the user has already reacted to the message */}
+                        {log.userName !== userName && !log.reaction && (
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.1 }}
+                            onClick={() => {
+                              const el = document.getElementById(`react-${log.id}`);
+                              if (el) {
+                                // Toggle the reaction menu
+                                if (el.classList.contains("hidden")) {
+                                  el.classList.remove("hidden");
+                                  el.classList.add("flex");
+                                } else {
+                                  el.classList.add("hidden");
+                                  el.classList.remove("flex");
+                                }
+                              }
+                            }}
+                            className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
+                            title="React"
+                          >
+                            👍
+                          </motion.button>
+                        )}
+                        
+                        {/* Show reaction controls if user has already reacted */}
+                        {log.userName !== userName && log.reaction && (
+                          <div className="flex gap-2 mt-1">
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              whileHover={{ scale: 1.1 }}
+                              onClick={() => {
+                                const el = document.getElementById(`react-${log.id}`);
+                                if (el) {
+                                  // Toggle the reaction menu
+                                  if (el.classList.contains("hidden")) {
+                                    el.classList.remove("hidden");
+                                    el.classList.add("flex");
+                                  } else {
+                                    el.classList.add("hidden");
+                                    el.classList.remove("flex");
+                                  }
+                                }
+                              }}
+                              className="text-xs bg-green-900 text-green-300 px-2 py-1 rounded-full hover:shadow-md"
+                              title="Change reaction"
+                            >
+                              Change
+                            </motion.button>
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              whileHover={{ scale: 1.1 }}
+                              onClick={() => handleReaction(log, log.reaction, setChatLog)}
+                              className="text-xs bg-red-900/70 text-red-300 px-2 py-1 rounded-full hover:shadow-md hover:bg-red-900"
+                              title="Remove reaction"
+                            >
+                              Remove
+                            </motion.button>
+                          </div>
+                        )}
+                        
+                        <motion.div
+                          id={`react-${log.id}`}
+                          className="hidden gap-2 mt-1"
+                        >
+                          {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                            <motion.button
+                              key={emoji}
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: "spring", stiffness: 300 }}
+                              onClick={() => {
+                                handleReaction(log, emoji, setChatLog);
+                                const el = document.getElementById(`react-${log.id}`);
+                                if (el) {
+                                  el.classList.add("hidden");
+                                  el.classList.remove("flex");
+                                }
+                              }}
+                              className={`text-sm hover:bg-green-700 px-2 py-1 rounded-full transition-all ${log.reaction === emoji ? 'bg-green-700 shadow-md' : 'bg-green-900/30'}`}
+                              title={`React with ${emoji}`}
+                            >
+                              {emoji}
+                            </motion.button>
+                          ))}
+                          {log.reaction && (
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              whileHover={{ scale: 1.1 }}
+                              onClick={() => {
+                                handleReaction(log, log.reaction, setChatLog);
+                                const el = document.getElementById(`react-${log.id}`);
+                                if (el) {
+                                  el.classList.add("hidden");
+                                  el.classList.remove("flex");
+                                }
+                              }}
+                              className="text-xs text-red-400 hover:text-red-600 bg-black/30 px-2 py-1 rounded-full"
+                              title="Remove reaction"
+                            >
+                              Remove
+                            </motion.button>
+                          )}
+                        </motion.div>
+                      </div>
+                    ))}
+                </div>
+
+                {/* Image preview section */}
+                {imagePreview && (
+                  <div className="mb-4 p-2 border border-green-500 rounded-lg bg-black/40">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-green-300 font-bold">📸 Image attachment</span>
+                      <button 
+                        onClick={clearImageSelection}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                      >
+                        ✕ Remove
+                      </button>
+                    </div>
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="max-h-40 max-w-full object-contain rounded-lg border border-green-700" 
+                    />
+                    {uploading && (
+                      <div className="mt-2">
+                        <div className="w-full bg-green-900/30 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-green-500 h-full transition-all duration-200"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-green-400 mt-1 text-right">{uploadProgress}% uploaded</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Integrated input in chat box with image upload button */}
+                <div className="bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-500">💬</span>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={command}
+                      onChange={(e) => setCommand(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && !uploading && handleCommand()}
                       className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
                       placeholder={uploading ? "Uploading image..." : "Type your message or 'exit' to quit chat mode..."}
                       title="Enter your chat message"
@@ -717,236 +950,4 @@ const AnimatedLine = ({ text, onComplete }) => {
   ) : (
     <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
   );
-};                      placeholder={animatedOutput.length > 0 ? "waiting for output to finish..." : "type a command..."}
-                      title="Enter a terminal-style command"
-                      disabled={animatedOutput.length > 0}
-                      autoFocus
-                    />
-                  </div>
-                </>
-              )}
-              {chatMode && (
-                <p className="text-green-300 mb-3">
-                  <span className="text-yellow-300 font-bold">Chat mode active.</span> Type a message below to chat with Abdallah. Type 'exit' to return to command mode.
-                </p>
-              )}
-            </div>
-            
-            {chatMode && (
-              <div className="bg-black/30 border border-green-600 rounded-xl p-4 shadow-lg">
-                <div className="flex justify-between items-center mb-4">
-                  <p className="text-green-400 font-bold text-lg">💬 Chat Mode</p>
-                  <button 
-                    onClick={() => {
-                      setChatMode(false);
-                      setStaticOutput((prev) => [...prev, "Exited chat mode."]);
-                      clearImageSelection();
-                    }}
-                    className="text-white hover:text-red-200 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full flex items-center gap-2 font-bold shadow-lg transition-all duration-200"
-                  >
-                    <span>Exit Chat</span> ✕
-                  </button>
-                </div>
-                
-                {/* Chat messages display */}
-                <div className="mb-4 max-h-[50vh] overflow-y-auto">
-                  {chatLog
-                    .filter(log => isAdmin || log.userName === userName || log.recipient === userName)
-                    .map((log, idx) => (
-                      <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] mb-2 ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
-                        <p className="font-semibold">
-                          <span className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"}`}>
-                            {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
-                          </span>
-                          <span className="text-white ml-1">{log.user}</span>
-                          <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
-                          {log.reaction && (
-                            <motion.span
-                              key={`${log.id}-${log.reaction}`}
-                              initial={{ scale: 0.5, opacity: 0 }}
-                              animate={{ scale: 1.1, opacity: 1 }}
-                              transition={{ type: 'spring', stiffness: 400 }}
-                              whileHover={{ scale: 1.2 }}
-                              title={`Reaction: ${log.reaction}`}
-                              className="ml-2 bg-green-800 px-2 py-1 rounded-full text-white text-sm shadow-md inline-block align-middle"
-                            >
-                              {log.reaction}
-                            </motion.span>
-                          )}
-                          {log.userName === userName && log.seenByAdmin && (
-                            <span className="text-xs text-green-500 ml-2">✓✓ Seen</span>
-                          )}
-                          {log.userName === userName && !log.seenByAdmin && (
-                            <span className="text-xs text-gray-400 ml-2">✓ Sent</span>
-                          )}
-                        </p>
-                        
-                        {/* Display attached image if any */}
-                        {log.imageUrl && (
-                          <div className={`mt-2 ${log.userName === "Abdallah" ? "ml-auto" : "mr-auto"}`}>
-                            <motion.div
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.3 }}
-                            >
-                              <img 
-                                src={log.imageUrl} 
-                                alt="Attached" 
-                                className="rounded-lg border-2 border-green-600 max-w-full max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                                onClick={() => window.open(log.imageUrl, '_blank')}
-                              />
-                            </motion.div>
-                          </div>
-                        )}
-                        
-                        {/* Only show reaction button for messages from other users, not the user's own messages,
-                          and hide the button if the user has already reacted to the message */}
-                        {log.userName !== userName && !log.reaction && (
-                          <motion.button
-                            whileTap={{ scale: 0.9 }}
-                            whileHover={{ scale: 1.1 }}
-                            onClick={() => {
-                              const el = document.getElementById(`react-${log.id}`);
-                              if (el) {
-                                // Toggle the reaction menu
-                                if (el.classList.contains("hidden")) {
-                                  el.classList.remove("hidden");
-                                  el.classList.add("flex");
-                                } else {
-                                  el.classList.add("hidden");
-                                  el.classList.remove("flex");
-                                }
-                              }
-                            }}
-                            className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
-                            title="React"
-                          >
-                            👍
-                          </motion.button>
-                        )}
-                        
-                        {/* Show reaction controls if user has already reacted */}
-                        {log.userName !== userName && log.reaction && (
-                          <div className="flex gap-2 mt-1">
-                            <motion.button
-                              whileTap={{ scale: 0.9 }}
-                              whileHover={{ scale: 1.1 }}
-                              onClick={() => {
-                                const el = document.getElementById(`react-${log.id}`);
-                                if (el) {
-                                  // Toggle the reaction menu
-                                  if (el.classList.contains("hidden")) {
-                                    el.classList.remove("hidden");
-                                    el.classList.add("flex");
-                                  } else {
-                                    el.classList.add("hidden");
-                                    el.classList.remove("flex");
-                                  }
-                                }
-                              }}
-                              className="text-xs bg-green-900 text-green-300 px-2 py-1 rounded-full hover:shadow-md"
-                              title="Change reaction"
-                            >
-                              Change
-                            </motion.button>
-                            <motion.button
-                              whileTap={{ scale: 0.9 }}
-                              whileHover={{ scale: 1.1 }}
-                              onClick={() => handleReaction(log, log.reaction, setChatLog)}
-                              className="text-xs bg-red-900/70 text-red-300 px-2 py-1 rounded-full hover:shadow-md hover:bg-red-900"
-                              title="Remove reaction"
-                            >
-                              Remove
-                            </motion.button>
-                          </div>
-                        )}
-                        
-                        <motion.div
-                          id={`react-${log.id}`}
-                          className="hidden gap-2 mt-1"
-                        >
-                          {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-                            <motion.button
-                              key={emoji}
-                              initial={{ scale: 0.8, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              transition={{ type: "spring", stiffness: 300 }}
-                              onClick={() => {
-                                handleReaction(log, emoji, setChatLog);
-                                const el = document.getElementById(`react-${log.id}`);
-                                if (el) {
-                                  el.classList.add("hidden");
-                                  el.classList.remove("flex");
-                                }
-                              }}
-                              className={`text-sm hover:bg-green-700 px-2 py-1 rounded-full transition-all ${log.reaction === emoji ? 'bg-green-700 shadow-md' : 'bg-green-900/30'}`}
-                              title={`React with ${emoji}`}
-                            >
-                              {emoji}
-                            </motion.button>
-                          ))}
-                          {log.reaction && (
-                            <motion.button
-                              whileTap={{ scale: 0.9 }}
-                              whileHover={{ scale: 1.1 }}
-                              onClick={() => {
-                                handleReaction(log, log.reaction, setChatLog);
-                                const el = document.getElementById(`react-${log.id}`);
-                                if (el) {
-                                  el.classList.add("hidden");
-                                  el.classList.remove("flex");
-                                }
-                              }}
-                              className="text-xs text-red-400 hover:text-red-600 bg-black/30 px-2 py-1 rounded-full"
-                              title="Remove reaction"
-                            >
-                              Remove
-                            </motion.button>
-                          )}
-                        </motion.div>
-                      </div>
-                    ))}
-                </div>
-
-                {/* Image preview section */}
-                {imagePreview && (
-                  <div className="mb-4 p-2 border border-green-500 rounded-lg bg-black/40">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-green-300 font-bold">📸 Image attachment</span>
-                      <button 
-                        onClick={clearImageSelection}
-                        className="text-red-400 hover:text-red-300 text-sm"
-                      >
-                        ✕ Remove
-                      </button>
-                    </div>
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      className="max-h-40 max-w-full object-contain rounded-lg border border-green-700" 
-                    />
-                    {uploading && (
-                      <div className="mt-2">
-                        <div className="w-full bg-green-900/30 h-2 rounded-full overflow-hidden">
-                          <div 
-                            className="bg-green-500 h-full transition-all duration-200"
-                            style={{ width: `${uploadProgress}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-green-400 mt-1 text-right">{uploadProgress}% uploaded</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Integrated input in chat box with image upload button */}
-                <div className="bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-500">💬</span>
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={command}
-                      onChange={(e) => setCommand(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && !uploading && handleCommand()}
-                      className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
+};
