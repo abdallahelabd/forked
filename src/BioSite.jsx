@@ -1,4 +1,10 @@
-const handleAdminImageUpload = async (e, participant) => {
+useEffect(() => {
+    if (queuedLines.length > 0 && animatedOutput.length === 0) {
+      const [next, ...rest] = queuedLines;
+      setAnimatedOutput([next]);
+      setQueuedLines(rest);
+    }
+  }, [queuedLines, animatedOutput]);  const handleAdminImageUpload = async (e, participant) => {
     const file = e.target.files[0];
     if (!file) return;
     
@@ -372,20 +378,134 @@ export default function BioSite() {
     return () => unsubscribe();
   }, [isAdmin, userName, adminPanelOpen]);
 
+  // Function to collect visitor information
+  const collectVisitorInfo = async () => {
+    try {
+      console.log("Collecting visitor information...");
+      
+      // Get device information
+      const deviceInfo = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        vendor: navigator.vendor,
+        language: navigator.language,
+        screenWidth: window.screen.width,
+        screenHeight: window.screen.height,
+        colorDepth: window.screen.colorDepth,
+        pixelRatio: window.devicePixelRatio,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        cookiesEnabled: navigator.cookieEnabled,
+        doNotTrack: navigator.doNotTrack,
+        onlineStatus: navigator.onLine,
+        deviceMemory: navigator.deviceMemory || 'Not available',
+        cpuCores: navigator.hardwareConcurrency || 'Not available',
+        connectionType: navigator.connection ? navigator.connection.effectiveType : 'Not available',
+        batteryLevel: null, // Will be updated if available
+        timestamp: new Date().toISOString(),
+        visitorId: userName
+      };
+      
+      // Try to get battery information
+      if (navigator.getBattery) {
+        try {
+          const battery = await navigator.getBattery();
+          deviceInfo.batteryLevel = battery.level;
+          deviceInfo.batteryCharging = battery.charging;
+        } catch (err) {
+          console.log("Battery info not available:", err);
+        }
+      }
+      
+      // Try to get approximate location (note: requires user permission in most browsers)
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: false,
+              timeout: 5000,
+              maximumAge: 0
+            });
+          });
+          
+          deviceInfo.location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          };
+        } catch (err) {
+          console.log("Geolocation not available or denied:", err);
+          deviceInfo.location = "Permission denied or not available";
+        }
+      }
+      
+      // Try to get IP information from a third-party service
+      try {
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        deviceInfo.ipAddress = ipData.ip;
+        
+        // Optionally get more IP info
+        const geoResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
+        const geoData = await geoResponse.json();
+        deviceInfo.ipInfo = {
+          city: geoData.city,
+          region: geoData.region,
+          country: geoData.country_name,
+          postal: geoData.postal,
+          isp: geoData.org
+        };
+      } catch (err) {
+        console.log("IP info not available:", err);
+        deviceInfo.ipAddress = "Not available";
+      }
+      
+      console.log("Collected visitor information:", deviceInfo);
+      
+      // Store in Firestore
+      const visitorCollection = collection(db, "visitors");
+      await addDoc(visitorCollection, {
+        ...deviceInfo,
+        timestamp: serverTimestamp()
+      });
+      
+      // Optional: Send email notification about new visitor
+      try {
+        await emailjs.send("service_vjg01x9", "template_venfmmq", {
+          user_name: "System",
+          message: `New visitor: ${userName} using ${deviceInfo.platform} (${deviceInfo.userAgent.substring(0, 100)}...)`,
+          to_email: "abdallahelabd05@gmail.com"
+        }, "iqh5uRT5wWx4PA9DC");
+      } catch (error) {
+        console.error("❌ Email notification failed:", error);
+      }
+      
+      console.log("Visitor information stored successfully");
+    } catch (error) {
+      console.error("Failed to collect or store visitor information:", error);
+    }
+  };
+  
+  // Run visitor information collection on component mount
+  useEffect(() => {
+    // Check if this is a first-time visit using localStorage
+    const hasVisited = localStorage.getItem("hasVisited");
+    if (!hasVisited) {
+      // Set flag to prevent multiple collections for the same user
+      localStorage.setItem("hasVisited", "true");
+      
+      // Collect visitor info with a slight delay to ensure component is fully mounted
+      setTimeout(() => {
+        collectVisitorInfo();
+      }, 1000);
+    }
+  }, []);
+
   useEffect(() => {
     const scrollToBottom = setTimeout(() => {
       outputRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
     return () => clearTimeout(scrollToBottom);
   }, [staticOutput, animatedOutput, chatLog]);
-
-  useEffect(() => {
-    if (queuedLines.length > 0 && animatedOutput.length === 0) {
-      const [next, ...rest] = queuedLines;
-      setAnimatedOutput([next]);
-      setQueuedLines(rest);
-    }
-  }, [queuedLines, animatedOutput]);
 
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
