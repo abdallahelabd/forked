@@ -261,7 +261,7 @@ const FirestoreImage = ({ imageId, className }) => {
   );
 };
 
-function PinnedCommands({ setCommand, inputRef }) {
+function PinnedCommands({ setCommand, inputRef, handleCommand }) {
   const pinnedCommands = ["hello", "experience", "skills", "chat"];
   return (
     <div className="mt-10 border border-green-700 p-4 rounded-xl bg-green-900/10 backdrop-blur-md">
@@ -272,7 +272,8 @@ function PinnedCommands({ setCommand, inputRef }) {
             key={cmd}
             onClick={() => {
               setCommand(cmd);
-              inputRef.current?.focus();
+              // Execute the command immediately instead of just putting it in the input
+              setTimeout(() => handleCommand(cmd), 0);
             }}
             className="px-5 py-2.5 bg-green-500 text-black font-bold rounded-full shadow-lg hover:bg-green-400 hover:scale-105 transition-all duration-200 tracking-wide text-lg"
           >
@@ -677,92 +678,7 @@ export default function BioSite() {
     setCommand("");
   };
 
-  // Test function to verify Firestore collections and write access
-  const testFirestoreAccess = async () => {
-    try {
-      console.log("Testing Firestore access...");
-      
-      // Test chat collection
-      const testChatRef = collection(db, "chat");
-      const testChatDoc = await addDoc(testChatRef, {
-        test: true,
-        message: "Test message",
-        timestamp: serverTimestamp(),
-        userName: "TestUser"
-      });
-      console.log("Successfully wrote to chat collection with ID:", testChatDoc.id);
-      
-      // Test chat_images collection
-      const testImagesRef = collection(db, "chat_images");
-      const testImageDoc = await addDoc(testImagesRef, {
-        test: true,
-        data: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", // 1x1 transparent pixel
-        metadata: {
-          name: "test.png",
-          type: "image/png",
-          timestamp: Date.now(),
-          uploadedBy: "TestUser"
-        },
-        timestamp: serverTimestamp()
-      });
-      console.log("Successfully wrote to chat_images collection with ID:", testImageDoc.id);
-      
-      // Test reading back the data
-      const docSnap = await getDoc(doc(db, "chat_images", testImageDoc.id));
-      if (docSnap.exists()) {
-        console.log("Successfully read back the test image document");
-        
-        // Clean up test data
-        await deleteDoc(doc(db, "chat", testChatDoc.id));
-        await deleteDoc(doc(db, "chat_images", testImageDoc.id));
-        console.log("Successfully cleaned up test documents");
-        
-        alert("Firestore test successful! Read and write access confirmed.");
-      } else {
-        throw new Error("Failed to read back the test image document");
-      }
-    } catch (error) {
-      console.error("Firestore test failed:", error);
-      alert(`Firestore test failed: ${error.message}`);
-    }
-  };
-
-  // For debugging: Add a test button to the UI
-  useEffect(() => {
-    // Add a test button after the component mounts
-    const addTestButton = () => {
-      const existingButton = document.getElementById('firestore-test-button');
-      if (!existingButton) {
-        const button = document.createElement('button');
-        button.id = 'firestore-test-button';
-        button.innerText = 'Test Firestore Access';
-        button.style.position = 'fixed';
-        button.style.bottom = '10px';
-        button.style.right = '10px';
-        button.style.zIndex = '9999';
-        button.style.padding = '8px 16px';
-        button.style.backgroundColor = '#ff5722';
-        button.style.color = 'white';
-        button.style.border = 'none';
-        button.style.borderRadius = '4px';
-        button.style.cursor = 'pointer';
-        button.style.fontFamily = 'monospace';
-        button.style.fontSize = '12px';
-        button.onclick = testFirestoreAccess;
-        document.body.appendChild(button);
-      }
-    };
-    
-    addTestButton();
-    
-    return () => {
-      // Remove the test button when component unmounts
-      const existingButton = document.getElementById('firestore-test-button');
-      if (existingButton) {
-        existingButton.remove();
-      }
-    };
-  }, []);
+  // Function declarations continue here...
 
   return (
     <main className="min-h-screen bg-[#020b02] text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base w-full bg-[radial-gradient(ellipse_at_center,_#042f1d_0%,_#010d04_100%)]">
