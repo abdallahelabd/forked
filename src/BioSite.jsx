@@ -14,6 +14,12 @@ import {
   updateDoc,
   deleteDoc
 } from "firebase/firestore";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL
+} from "firebase/storage";
 
 // Firebase config
 const firebaseConfig = {
@@ -29,6 +35,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const chatCollection = collection(db, "chat");
 
 function PinnedCommands({ setCommand, inputRef }) {
@@ -88,6 +95,10 @@ export default function BioSite() {
   const [chatMode, setChatMode] = useState(false);
   const [booting, setBooting] = useState(true);
   const [chatLog, setChatLog] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [userName, setUserName] = useState(() => {
     const stored = localStorage.getItem("userName");
     if (stored) return stored;
@@ -99,6 +110,7 @@ export default function BioSite() {
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const inputRef = useRef(null);
   const outputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const q = query(chatCollection, orderBy("timestamp"));
@@ -139,7 +151,7 @@ export default function BioSite() {
       outputRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
     return () => clearTimeout(scrollToBottom);
-  }, [staticOutput, animatedOutput]);
+  }, [staticOutput, animatedOutput, chatLog]);
 
   useEffect(() => {
     if (queuedLines.length > 0 && animatedOutput.length === 0) {
@@ -149,9 +161,78 @@ export default function BioSite() {
     }
   }, [queuedLines, animatedOutput]);
 
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Only accept images under 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image is too large. Maximum size is 5MB.");
+      return;
+    }
+    
+    // Preview the image
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+    
+    setSelectedImage(file);
+  };
+
+  const clearImageSelection = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadImage = async () => {
+    if (!selectedImage) return null;
+    
+    setUploading(true);
+    setUploadProgress(0);
+    
+    // Create a unique filename
+    const timestamp = new Date().getTime();
+    const filename = `${userName}_${timestamp}_${selectedImage.name}`;
+    const storageRef = ref(storage, `chat_images/${filename}`);
+    
+    // Upload image with progress tracking
+    const uploadTask = uploadBytesResumable(storageRef, selectedImage);
+    
+    return new Promise((resolve, reject) => {
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(Math.round(progress));
+        },
+        (error) => {
+          console.error("Upload failed:", error);
+          setUploading(false);
+          reject(error);
+        },
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            setUploading(false);
+            setUploadProgress(100);
+            resolve(downloadURL);
+          } catch (error) {
+            console.error("Failed to get download URL:", error);
+            setUploading(false);
+            reject(error);
+          }
+        }
+      );
+    });
+  };
+
   const handleCommand = async () => {
     const trimmed = command.trim();
-    if (!trimmed) return;
+    if (!trimmed && !selectedImage) return;
 
     const [baseCmd, ...args] = trimmed.split(" ");
 
@@ -160,22 +241,39 @@ export default function BioSite() {
       setChatMode(false);
       setStaticOutput((prev) => [...prev, `$ ${trimmed}`, "Exited chat mode."]);
       setCommand("");
+      clearImageSelection();
       return;
     }
 
     if (chatMode) {
       if (!isAdmin) {
+        let imageUrl = null;
+        
+        // Upload image first if one is selected
+        if (selectedImage) {
+          try {
+            imageUrl = await uploadImage();
+          } catch (err) {
+            console.error("❌ Failed to upload image:", err);
+            alert("Failed to upload image. Please try again.");
+            return;
+          }
+        }
+        
         // Removed client-side time; using only serverTimestamp now
         const newMsg = {
           user: trimmed,
           userName,
-          timestamp: serverTimestamp()
+          timestamp: serverTimestamp(),
+          imageUrl: imageUrl
         };
+        
         try {
           await addDoc(chatCollection, newMsg);
         } catch (err) {
           console.error("❌ Failed to write message to Firestore:", err);
         }
+        
         try {
           if (userName !== "Abdallah") {
             // Only send email notifications for messages from regular users, not from admin
@@ -192,6 +290,7 @@ export default function BioSite() {
         setStaticOutput((prev) => [...prev, "❌ Admins must reply using the panel."]);
       }
       setCommand("");
+      clearImageSelection();
       return;
     }
 
@@ -258,6 +357,76 @@ export default function BioSite() {
     setCommand("");
   };
 
+  const handleAdminImageUpload = async (e, participant) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Only accept images under 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image is too large. Maximum size is 5MB.");
+      return;
+    }
+    
+    // Create a unique filename
+    const timestamp = new Date().getTime();
+    const filename = `Abdallah_${timestamp}_${file.name}`;
+    const storageRef = ref(storage, `chat_images/${filename}`);
+    
+    // Upload with progress indicator
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    
+    // Display a temporary loading message
+    const tempLoadingId = "temp-" + timestamp;
+    setChatLog(prev => [...prev, { 
+      id: tempLoadingId, 
+      user: "Uploading image...", 
+      userName: "Abdallah",
+      recipient: participant,
+      timestamp: new Date()
+    }]);
+    
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        // Update the temporary message with progress
+        setChatLog(prev => prev.map(msg => 
+          msg.id === tempLoadingId 
+            ? { ...msg, user: `Uploading image... ${Math.round(progress)}%` }
+            : msg
+        ));
+      },
+      (error) => {
+        console.error("Upload failed:", error);
+        // Remove the temporary message on error
+        setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
+        alert("Failed to upload image. Please try again.");
+      },
+      async () => {
+        try {
+          // Remove the temporary message
+          setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
+          
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          const time = new Date().toLocaleTimeString();
+          
+          // Add the image message to Firestore
+          await addDoc(chatCollection, {
+            user: "",
+            recipient: participant,
+            userName: "Abdallah",
+            time,
+            timestamp: serverTimestamp(),
+            seenByUser: false,
+            imageUrl: downloadURL
+          });
+        } catch (error) {
+          console.error("Failed to add image message:", error);
+          alert("Failed to send image. Please try again.");
+        }
+      }
+    );
+  };
+
   return (
     <main className="min-h-screen bg-[#020b02] text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base w-full bg-[radial-gradient(ellipse_at_center,_#042f1d_0%,_#010d04_100%)]">
       <div className="bg-black border border-green-700 rounded-lg p-4 sm:p-6 lg:p-8 w-full max-w-6xl mx-auto shadow-2xl shadow-green-900/50 overflow-x-hidden">
@@ -307,7 +476,248 @@ export default function BioSite() {
                       onChange={(e) => setCommand(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleCommand()}
                       className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-                      placeholder={animatedOutput.length > 0 ? "waiting for output to finish..." : "type a command..."}
+                      placeholder={uploading ? "Uploading image..." : "Type your message or 'exit' to quit chat mode..."}
+                      title="Enter your chat message"
+                      disabled={uploading}
+                      autoFocus
+                    />
+                    
+                    {/* Image attachment button */}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImageSelect}
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading || !!selectedImage}
+                      className={`px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1
+                        ${uploading || selectedImage 
+                          ? 'bg-green-900 text-green-700 cursor-not-allowed' 
+                          : 'bg-green-700 hover:bg-green-600 text-white cursor-pointer'}`}
+                      title="Attach image"
+                    >
+                      <span>📸</span>
+                    </button>
+                    
+                    <button
+                      onClick={handleCommand}
+                      disabled={(!command.trim() && !selectedImage) || uploading}
+                      className={`px-3 py-1 rounded-full text-sm font-bold
+                        ${(!command.trim() && !selectedImage) || uploading 
+                          ? 'bg-green-900 text-green-700 cursor-not-allowed' 
+                          : 'bg-green-600 hover:bg-green-500 text-white cursor-pointer'}`}
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+                <div ref={outputRef} />
+              </div>
+            )}
+          </div>
+
+          <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
+        </motion.div>
+      </section>
+      {isAdmin && (
+        <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
+          <button
+            className="sm:hidden block mb-2 text-green-400 underline"
+            onClick={() => setAdminPanelOpen(!adminPanelOpen)}
+          >
+            {adminPanelOpen ? "Hide Admin Panel" : "Show Admin Panel"}
+          </button>
+          {(adminPanelOpen || window.innerWidth >= 640) && (
+            <div className="flex flex-col h-full">
+              <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
+              <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
+
+              <div className="flex-1 overflow-y-auto space-y-4 mt-3">
+                {Object.entries(
+                  chatLog.reduce((acc, msg) => {
+                    const otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
+                    if (!acc[otherUser]) acc[otherUser] = [];
+                    acc[otherUser].push(msg);
+                    return acc;
+                  }, {})
+                ).map(([participant, messages]) => (
+                  <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
+                    <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
+
+                    <button
+                      className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
+                      onClick={async () => {
+                        const confirmClear = window.confirm(`Clear conversation with ${participant}?`);
+                        if (!confirmClear) return;
+                        const idsToDelete = messages.map((m) => m.id);
+                        for (const id of idsToDelete) {
+                          await deleteDoc(doc(db, "chat", id));
+                        }
+                      }}
+                    >
+                      🗑 Clear conversation
+                    </button>
+
+                    <ul className="space-y-2 text-sm">
+                      {messages.map((msg, index) => (
+                        <li
+                          key={index}
+                          className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
+                        >
+                          <p className="text-white">
+                            <span className={msg.userName === "Abdallah" ? "text-yellow-400 font-bold" : "text-green-100"}>
+                              {msg.userName === "Abdallah" ? "🫅 Abdallah: " : ""}
+                            </span>
+                            {msg.user} 
+                            {msg.reaction && 
+                              <span className='ml-2 bg-green-700 px-2 py-1 rounded-full'>{msg.reaction}</span>
+                            }
+                          </p>
+                          
+                          {/* Display image in admin panel */}
+                          {msg.imageUrl && (
+                            <div className="mt-2">
+                              <img 
+                                src={msg.imageUrl} 
+                                alt="Attached" 
+                                className="rounded-lg border border-green-600 max-w-full max-h-32 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => window.open(msg.imageUrl, '_blank')}
+                              />
+                            </div>
+                          )}
+                          
+                          <div className="flex gap-2 mt-1">
+                            {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                              <motion.button
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                                key={emoji}
+                                onClick={() => handleReaction(msg, emoji, setChatLog)}
+                                className={`text-sm hover:bg-green-700 px-2 py-1 rounded-full transition-all ${msg.reaction === emoji ? 'bg-green-700 shadow-md' : 'bg-green-900/30'}`}
+                                title={`React with ${emoji}`}
+                              >
+                                {emoji}
+                              </motion.button>
+                            ))}
+                          </div>
+                          {isAdmin && (
+                            <button
+                              className="text-xs text-red-400 mt-1 hover:text-red-600"
+                              onClick={async () => {
+                                const confirmDelete = window.confirm("Delete this message?");
+                                if (confirmDelete) {
+                                  await deleteDoc(doc(db, 'chat', msg.id));
+                                }
+                              }}
+                            >
+                              🗑 Delete
+                            </button>
+                          )}
+                          <span className="block text-xs text-green-500 mt-1">{msg.timestamp?.toDate && new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
+                          {msg.userName === "Abdallah" && (
+                            <span className="block text-[10px] text-green-400 mt-0.5">
+                              {msg.seenByUser ? `✓✓ Seen ${msg.seenTime ? 'at ' + msg.seenTime : ''}` : "✓ Sent"}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="mt-3">
+                      {/* Admin image upload section */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <label className="flex-1 text-xs text-green-400">
+                          <span className="bg-green-700 hover:bg-green-600 px-3 py-1 rounded-full cursor-pointer inline-block mb-1">
+                            📸 Send image
+                          </span>
+                          <input 
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleAdminImageUpload(e, participant)}
+                          />
+                        </label>
+                      </div>
+
+                      <form
+                        className="flex gap-2"
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          const input = e.target.elements[`reply-${participant}`];
+                          const message = input.value.trim();
+                          if (!message) return;
+                          const time = new Date().toLocaleTimeString();
+                          await addDoc(chatCollection, {
+                            user: message,
+                            recipient: participant,
+                            userName: "Abdallah",
+                            time,
+                            timestamp: serverTimestamp(),
+                            seenByUser: false
+                          });
+                          input.value = "";
+                        }}
+                      >
+                        <input
+                          type="text"
+                          name={`reply-${participant}`}
+                          placeholder={`Reply to ${participant}...`}
+                          className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
+                        />
+                        <button
+                          type="submit"
+                          className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
+                        >
+                          Send
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      </div>
+    </main>
+  );
+}
+
+const AnimatedLine = ({ text, onComplete }) => {
+  const [displayedText, setDisplayedText] = useState("");
+
+  useEffect(() => {
+    if (!text) return;
+    let i = 0;
+    const stripped = text.replace(/<[^>]+>/g, "");
+    const chars = [...stripped];
+    const interval = setInterval(() => {
+      if (i < chars.length) {
+        setDisplayedText((prev) => prev + chars[i]);
+        i++;
+      } else {
+        clearInterval(interval);
+        if (onComplete && typeof text === "string") {
+          setTimeout(() => onComplete(text + ""), 0);
+        }
+      }
+    }, 15);
+    return () => clearInterval(interval);
+  }, [text]);
+
+  const isHtml = /<[^>]+>/.test(text);
+  return isHtml ? (
+    <pre dangerouslySetInnerHTML={{ __html: text }} />
+  ) : (
+    <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
+  );
+};                      placeholder={animatedOutput.length > 0 ? "waiting for output to finish..." : "type a command..."}
                       title="Enter a terminal-style command"
                       disabled={animatedOutput.length > 0}
                       autoFocus
@@ -330,6 +740,7 @@ export default function BioSite() {
                     onClick={() => {
                       setChatMode(false);
                       setStaticOutput((prev) => [...prev, "Exited chat mode."]);
+                      clearImageSelection();
                     }}
                     className="text-white hover:text-red-200 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full flex items-center gap-2 font-bold shadow-lg transition-all duration-200"
                   >
@@ -369,6 +780,24 @@ export default function BioSite() {
                             <span className="text-xs text-gray-400 ml-2">✓ Sent</span>
                           )}
                         </p>
+                        
+                        {/* Display attached image if any */}
+                        {log.imageUrl && (
+                          <div className={`mt-2 ${log.userName === "Abdallah" ? "ml-auto" : "mr-auto"}`}>
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <img 
+                                src={log.imageUrl} 
+                                alt="Attached" 
+                                className="rounded-lg border-2 border-green-600 max-w-full max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => window.open(log.imageUrl, '_blank')}
+                              />
+                            </motion.div>
+                          </div>
+                        )}
                         
                         {/* Only show reaction button for messages from other users, not the user's own messages,
                           and hide the button if the user has already reacted to the message */}
@@ -479,209 +908,45 @@ export default function BioSite() {
                     ))}
                 </div>
 
-                {/* Integrated input in chat box */}
-                <div className="flex items-center gap-2 bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
-                  <span className="text-green-500">💬</span>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={command}
-                    onChange={(e) => setCommand(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleCommand()}
-                    className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
-                    placeholder="Type your message or 'exit' to quit chat mode..."
-                    title="Enter your chat message"
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleCommand}
-                    disabled={!command.trim()}
-                    className={`px-3 py-1 rounded-full text-sm font-bold ${command.trim() ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer' : 'bg-green-900 text-green-700 cursor-not-allowed'}`}
-                  >
-                    Send
-                  </button>
-                </div>
-                <div ref={outputRef} />
-              </div>
-            )}
-          </div>
-
-          <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
-        </motion.div>
-      </section>
-      {isAdmin && (
-        <div className="fixed bottom-0 sm:top-4 sm:right-4 left-0 sm:left-auto bg-black text-green-200 p-4 sm:rounded-lg shadow-lg w-full sm:w-[22rem] max-h-[60vh] overflow-y-auto z-50">
-          <button
-            className="sm:hidden block mb-2 text-green-400 underline"
-            onClick={() => setAdminPanelOpen(!adminPanelOpen)}
-          >
-            {adminPanelOpen ? "Hide Admin Panel" : "Show Admin Panel"}
-          </button>
-          {(adminPanelOpen || window.innerWidth >= 640) && (
-            <div className="flex flex-col h-full">
-              <h2 className="font-bold text-lg mb-2">Admin Panel</h2>
-              <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
-
-              <div className="flex-1 overflow-y-auto space-y-4 mt-3">
-                {Object.entries(
-                  chatLog.reduce((acc, msg) => {
-                    const otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
-                    if (!acc[otherUser]) acc[otherUser] = [];
-                    acc[otherUser].push(msg);
-                    return acc;
-                  }, {})
-                ).map(([participant, messages]) => (
-                  <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
-                    <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
-
-                    <button
-                      className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
-                      onClick={async () => {
-                        const confirmClear = window.confirm(`Clear conversation with ${participant}?`);
-                        if (!confirmClear) return;
-                        const idsToDelete = messages.map((m) => m.id);
-                        for (const id of idsToDelete) {
-                          await deleteDoc(doc(db, "chat", id));
-                        }
-                      }}
-                    >
-                      🗑 Clear conversation
-                    </button>
-
-                    <ul className="space-y-2 text-sm">
-                      {messages.map((msg, index) => (
-                        <li
-                          key={index}
-                          className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
-                        >
-                          <p className="text-white">
-                            <span className={msg.userName === "Abdallah" ? "text-yellow-400 font-bold" : "text-green-100"}>
-                              {msg.userName === "Abdallah" ? "🫅 Abdallah: " : ""}
-                            </span>
-                            {msg.user} 
-                            {msg.reaction && 
-                              <span className='ml-2 bg-green-700 px-2 py-1 rounded-full'>{msg.reaction}</span>
-                            }
-                          </p>
-                          <div className="flex gap-2 mt-1">
-                            {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
-                              <motion.button
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ type: "spring", stiffness: 300 }}
-                                key={emoji}
-                                onClick={() => handleReaction(msg, emoji, setChatLog)}
-                                className={`text-sm hover:bg-green-700 px-2 py-1 rounded-full transition-all ${msg.reaction === emoji ? 'bg-green-700 shadow-md' : 'bg-green-900/30'}`}
-                                title={`React with ${emoji}`}
-                              >
-                                {emoji}
-                              </motion.button>
-                            ))}
-                          </div>
-                          {isAdmin && (
-                            <button
-                              className="text-xs text-red-400 mt-1 hover:text-red-600"
-                              onClick={async () => {
-                                const confirmDelete = window.confirm("Delete this message?");
-                                if (confirmDelete) {
-                                  await deleteDoc(doc(db, 'chat', msg.id));
-                                }
-                              }}
-                            >
-                              🗑 Delete
-                            </button>
-                          )}
-                          <span className="block text-xs text-green-500 mt-1">{msg.timestamp?.toDate && new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
-                          {msg.userName === "Abdallah" && (
-                            <span className="block text-[10px] text-green-400 mt-0.5">
-                              {msg.seenByUser ? `✓✓ Seen ${msg.seenTime ? 'at ' + msg.seenTime : ''}` : "✓ Sent"}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <form
-                      className="mt-3 flex gap-2"
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const input = e.target.elements[`reply-${participant}`];
-                        const message = input.value.trim();
-                        if (!message) return;
-                        const time = new Date().toLocaleTimeString();
-                        await addDoc(chatCollection, {
-                          user: message,
-                          recipient: participant,
-                          userName: "Abdallah",
-                          time,
-                          timestamp: serverTimestamp(),
-                          seenByUser: false
-                        });
-                        input.value = "";
-                        try {
-                          // No need to send email notification for admin's own messages
-                          // This prevents admin from emailing themselves
-                          // await emailjs.send("service_2fdtfyg", "template_btw21b8", {
-                          //   user_name: "Abdallah",
-                          //   message,
-                          //   to_email: "abdallahelabd05@gmail.com"
-                          // }, "vhPVKbLsc89CisiWl");
-                        } catch (error) {
-                          console.error("Email failed:", error);
-                        }
-                      }}
-                    >
-                      <input
-                        type="text"
-                        name={`reply-${participant}`}
-                        placeholder={`Reply to ${participant}...`}
-                        className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
-                      />
-                      <button
-                        type="submit"
-                        className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
+                {/* Image preview section */}
+                {imagePreview && (
+                  <div className="mb-4 p-2 border border-green-500 rounded-lg bg-black/40">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-green-300 font-bold">📸 Image attachment</span>
+                      <button 
+                        onClick={clearImageSelection}
+                        className="text-red-400 hover:text-red-300 text-sm"
                       >
-                        Send
+                        ✕ Remove
                       </button>
-                    </form>
+                    </div>
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="max-h-40 max-w-full object-contain rounded-lg border border-green-700" 
+                    />
+                    {uploading && (
+                      <div className="mt-2">
+                        <div className="w-full bg-green-900/30 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-green-500 h-full transition-all duration-200"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-green-400 mt-1 text-right">{uploadProgress}% uploaded</p>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-      </div>
-    </main>
-  );
-}
+                )}
 
-const AnimatedLine = ({ text, onComplete }) => {
-  const [displayedText, setDisplayedText] = useState("");
-
-  useEffect(() => {
-    if (!text) return;
-    let i = 0;
-    const stripped = text.replace(/<[^>]+>/g, "");
-    const chars = [...stripped];
-    const interval = setInterval(() => {
-      if (i < chars.length) {
-        setDisplayedText((prev) => prev + chars[i]);
-        i++;
-      } else {
-        clearInterval(interval);
-        if (onComplete && typeof text === "string") {
-          setTimeout(() => onComplete(text + ""), 0);
-        }
-      }
-    }, 15);
-    return () => clearInterval(interval);
-  }, [text]);
-
-  const isHtml = /<[^>]+>/.test(text);
-  return isHtml ? (
-    <pre dangerouslySetInnerHTML={{ __html: text }} />
-  ) : (
-    <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
-  );
-};
+                {/* Integrated input in chat box with image upload button */}
+                <div className="bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-500">💬</span>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={command}
+                      onChange={(e) => setCommand(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && !uploading && handleCommand()}
+                      className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
