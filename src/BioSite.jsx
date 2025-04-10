@@ -261,8 +261,14 @@ const FirestoreImage = ({ imageId, className }) => {
   );
 };
 
-function PinnedCommands({ setCommand, inputRef, handleCommand }) {
+function PinnedCommands({ setCommand, inputRef, executeCommand }) {
   const pinnedCommands = ["hello", "experience", "skills", "chat"];
+  
+  const handlePinnedCommand = (cmd) => {
+    // Execute the command directly instead of going through the input field
+    executeCommand(cmd);
+  };
+  
   return (
     <div className="mt-10 border border-green-700 p-4 rounded-xl bg-green-900/10 backdrop-blur-md">
       <p className="text-green-300 text-xl mb-3 font-bold underline">Pinned Commands</p>
@@ -270,16 +276,12 @@ function PinnedCommands({ setCommand, inputRef, handleCommand }) {
         {pinnedCommands.map((cmd) => (
           <button
             key={cmd}
-            onClick={() => {
-              setCommand(cmd);
-              // Execute the command immediately instead of just putting it in the input
-              setTimeout(() => handleCommand(cmd), 0);
-            }}
+            onClick={() => handlePinnedCommand(cmd)}
             className="px-5 py-2.5 bg-green-500 text-black font-bold rounded-full shadow-lg hover:bg-green-400 hover:scale-105 transition-all duration-200 tracking-wide text-lg"
           >
             {cmd}
           </button>
-          ))}
+        ))}
       </div>
     </div>
   );
@@ -516,20 +518,66 @@ export default function BioSite() {
     }
   };
 
-  const handleCommand = async () => {
-    const trimmed = command.trim();
-    if (!trimmed && !selectedImage) return;
-
-    const [baseCmd, ...args] = trimmed.split(" ");
-
-    // Allow users to exit chat mode with "exit" or "quit" or "/exit" or "/quit"
-    if (chatMode && ["exit", "quit", "/exit", "/quit"].includes(trimmed.toLowerCase())) {
-      setChatMode(false);
-      setStaticOutput((prev) => [...prev, `$ ${trimmed}`, "Exited chat mode."]);
-      setCommand("");
-      clearImageSelection();
-      return;
+  // Direct command execution function for pinned commands
+  const executeCommand = (cmd) => {
+    // Add command to output first
+    setStaticOutput((prev) => [...prev, `$ ${cmd}`]);
+    
+    let result = [];
+    switch (cmd) {
+      case "clear":
+        setStaticOutput((prev) => [...prev, "🪩 This command no longer clears global chat."]);
+        return;
+      case "admin":
+        if (isAdmin) {
+          setAdminPanelOpen(true);
+          setStaticOutput((prev) => [...prev, "Admin panel opened."]);
+        } else {
+          // For non-admins, we'll leave this to be handled via the normal command input
+          setCommand("admin ");
+          inputRef.current?.focus();
+        }
+        return;
+      case "logout":
+        setIsAdmin(false);
+        localStorage.removeItem("isAdmin");
+        setStaticOutput((prev) => [...prev, "🚩 Logged out of admin mode."]);
+        return;
+      case "chat":
+        setChatMode(true);
+        setStaticOutput((prev) => [...prev, "Chat mode activated! Type your message."]);
+        return;
+      case "hello":
+        result = ["Hello, Welcome to my humble site! 👋"];
+        break;
+      case "experience":
+        result = [
+          "→ Worked as a freelancing programmer since 2020.",
+          "→ Launched more than 5 startups in 3 different fields.",
+          "→ Gained many experiences in fields like designing, blockchain and marketing."
+        ];
+        break;
+      case "skills":
+        result = [
+          "🧠 Programming:",
+          "• Python • C++ • HTML • JS • CSS • Solidity",
+          "🎨 Designing:",
+          "• Photoshop • Illustrator • Figma • Adobe Premiere",
+          "📣 Marketing:",
+          "• Facebook • Twitter • Google Ads"
+        ];
+        break;
+      default:
+        result = [`Command not found: ${cmd}`];
     }
+    
+    // Queue result lines for animation
+    result.forEach((line, index) => {
+      setTimeout(() => {
+        setQueuedLines((prev) => [...prev, line]);
+      }, index * 400);
+    });
+  };
 
     if (chatMode) {
       if (!isAdmin) {
@@ -969,7 +1017,7 @@ export default function BioSite() {
                       type="text"
                       value={command}
                       onChange={(e) => setCommand(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && !uploading && handleCommand()}
+                      onKeyDown={(e) => e.key === "Enter" && handleCommand()}
                       className="bg-transparent outline-none text-green-400 placeholder-green-600 w-full pr-4"
                       placeholder={uploading ? "Uploading image..." : "Type your message or 'exit' to quit chat mode..."}
                       title="Enter your chat message"
@@ -999,7 +1047,7 @@ export default function BioSite() {
                     </button>
                     
                     <button
-                      onClick={handleCommand}
+                      onClick={() => handleCommand()}
                       disabled={(!command.trim() && !selectedImage) || uploading}
                       className={`px-3 py-1 rounded-full text-sm font-bold
                         ${(!command.trim() && !selectedImage) || uploading 
@@ -1015,7 +1063,7 @@ export default function BioSite() {
             )}
           </div>
 
-          <PinnedCommands setCommand={setCommand} inputRef={inputRef} />
+          <PinnedCommands setCommand={setCommand} inputRef={inputRef} executeCommand={executeCommand} />
         </motion.div>
       </section>
       {isAdmin && (
