@@ -1,4 +1,146 @@
-import React, { useState, useEffect, useRef } from "react";
+const handleAdminImageUpload = async (e, participant) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Only accept images under 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image is too large. Maximum size is 5MB.");
+      return;
+    }
+    
+    // Display a temporary loading message
+    const timestamp = new Date().getTime();
+    const tempLoadingId = "temp-" + timestamp;
+    setChatLog(prev => [...prev, { 
+      id: tempLoadingId, 
+      user: "Uploading image...", 
+      userName: "Abdallah",
+      recipient: participant,
+      timestamp: new Date()
+    }]);
+    
+    try {
+      // Create a promise to read the file as data URL
+      const reader = new FileReader();
+      const imageDataPromise = new Promise((resolve, reject) => {
+        reader.onload = (e) => {
+          console.log("Admin upload: FileReader success, data URL length:", e.target.result.length);
+          resolve(e.target.result);
+        };
+        reader.onerror = (e) => {
+          console.error("Admin upload: FileReader error:", e);
+          reject(new Error("Failed to read file"));
+        };
+      });
+      
+      // Start reading
+      console.log("Admin upload: Starting FileReader for file:", file.name, "Size:", file.size, "Type:", file.type);
+      reader.readAsDataURL(file);
+      
+      // Update the temporary message with progress
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 25%` }
+          : msg
+      ));
+      
+      // Wait for the file to be read
+      const imageData = await imageDataPromise;
+      console.log("Admin upload: Image data obtained, length:", imageData.length);
+      
+      // Update progress
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 50%` }
+          : msg
+      ));
+      
+      // Check if data is valid
+      if (!imageData || !imageData.startsWith('data:')) {
+        throw new Error("Invalid image data format");
+      }
+      
+      // Generate a unique ID for the image
+      const imageId = `Abdallah_${timestamp}`;
+      console.log("Admin upload: Generated image ID:", imageId);
+      
+      // Create image metadata
+      const imageMetadata = {
+        id: imageId,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        timestamp: timestamp,
+        uploadedBy: "Abdallah",
+        recipient: participant
+      };
+      
+      console.log("Admin upload: Storing in Firestore with metadata:", imageMetadata);
+      
+      // Update progress
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 75%` }
+          : msg
+      ));
+      
+      // Add the image data to Firestore
+      const imageCollection = collection(db, "chat_images");
+      console.log("Admin upload: Attempting to write to Firestore collection 'chat_images'...");
+      
+      try {
+        const docRef = await addDoc(imageCollection, {
+          data: imageData,
+          metadata: imageMetadata,
+          timestamp: serverTimestamp()
+        });
+        
+        console.log("Admin upload: Image data stored in Firestore with ID:", docRef.id);
+        
+        // Update progress to 100%
+        setChatLog(prev => prev.map(msg => 
+          msg.id === tempLoadingId 
+            ? { ...msg, user: `Uploading image... 100%` }
+            : msg
+        ));
+        
+        // Remove the temporary message
+        setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
+        
+        // Check if admin message actually contains image data
+        const checkDoc = await getDoc(doc(db, "chat_images", docRef.id));
+        if (checkDoc.exists() && checkDoc.data().data) {
+          console.log("Admin upload: Verified image data exists in Firestore document");
+        } else {
+          console.error("Admin upload: Image data not found in newly created document!");
+        }
+        
+        // Add the image message to the chat
+        await addDoc(chatCollection, {
+          user: "",
+          recipient: participant,
+          userName: "Abdallah",
+          time: new Date().toLocaleTimeString(),
+          timestamp: serverTimestamp(),
+          seenByUser: false,
+          imageUrl: docRef.id, // Use document ID as the image reference
+          isFirestoreImage: true // Flag to indicate this is a Firestore-stored image
+        });
+        
+      } catch (firestoreError) {
+        console.error("Admin upload: Firestore write error:", firestoreError);
+        console.error("Error code:", firestoreError.code);
+        console.error("Error message:", firestoreError.message);
+        throw firestoreError;
+      }
+      
+    } catch (error) {
+      console.error("Error during direct admin upload:", error);
+      // Remove the temporary message on error
+      setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
+      alert(`Upload failed: ${error.message}`);
+    }
+  };import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
@@ -50,11 +192,29 @@ const FirestoreImage = ({ imageId, className }) => {
     const fetchImage = async () => {
       try {
         setLoading(true);
+        console.log("FirestoreImage: Fetching image with ID:", imageId);
+        
+        if (!imageId) {
+          setError("No image ID provided");
+          return;
+        }
+        
         const docRef = doc(db, "chat_images", imageId);
+        console.log("FirestoreImage: Getting document from path:", docRef.path);
+        
         const docSnap = await getDoc(docRef);
+        console.log("FirestoreImage: Document exists:", docSnap.exists());
         
         if (docSnap.exists()) {
-          setImageData(docSnap.data().data);
+          const data = docSnap.data();
+          console.log("FirestoreImage: Got data, image data exists:", !!data.data);
+          
+          if (data && data.data) {
+            setImageData(data.data);
+          } else {
+            setError("Image data is missing");
+            console.error("Image data is missing in document:", imageId);
+          }
         } else {
           setError("Image not found");
           console.error("No image found with ID:", imageId);
@@ -72,9 +232,9 @@ const FirestoreImage = ({ imageId, className }) => {
     }
   }, [imageId]);
   
-  if (loading) return <div className="text-green-400 text-xs">Loading image...</div>;
-  if (error) return <div className="text-red-400 text-xs">Error: {error}</div>;
-  if (!imageData) return <div className="text-yellow-400 text-xs">Image not available</div>;
+  if (loading) return <div className="text-green-400 text-xs flex items-center justify-center h-20 w-full">Loading image...</div>;
+  if (error) return <div className="text-red-400 text-xs flex items-center justify-center h-20 w-full bg-black/30 rounded border border-red-600 p-2">Error: {error}</div>;
+  if (!imageData) return <div className="text-yellow-400 text-xs flex items-center justify-center h-20 w-full bg-black/30 rounded border border-yellow-600 p-2">Image not available</div>;
   
   return (
     <img 
@@ -83,15 +243,19 @@ const FirestoreImage = ({ imageId, className }) => {
       className={className}
       onClick={() => {
         // Open image in new tab
-        const win = window.open();
-        win.document.write(`
-          <html>
-            <head><title>Image</title></head>
-            <body style="margin: 0; display: flex; justify-content: center; align-items: center; background: #000;">
-              <img src="${imageData}" style="max-width: 100%; max-height: 100vh;" />
-            </body>
-          </html>
-        `);
+        const win = window.open("", "_blank");
+        if (win) {
+          win.document.write(`
+            <html>
+              <head><title>Image</title></head>
+              <body style="margin: 0; display: flex; justify-content: center; align-items: center; background: #000;">
+                <img src="${imageData}" style="max-width: 100%; max-height: 100vh;" />
+              </body>
+            </html>
+          `);
+        } else {
+          alert("Popup blocked. Please allow popups to view the full image.");
+        }
       }}
     />
   );
@@ -262,35 +426,46 @@ export default function BioSite() {
         return null;
       }
       
-      console.log("Starting upload directly to Firestore...");
+      console.log("Starting upload process with file:", selectedImage.name, "Size:", selectedImage.size, "Type:", selectedImage.type);
       
       // Create a promise to read the file as data URL
       const reader = new FileReader();
       const imageDataPromise = new Promise((resolve, reject) => {
         reader.onload = (e) => {
+          console.log("FileReader success, data URL length:", e.target.result.length);
           resolve(e.target.result);
         };
         reader.onerror = (e) => {
           console.error("FileReader error:", e);
           reject(new Error("Failed to read file"));
         };
+        reader.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percentLoaded = Math.round((e.loaded / e.total) * 25); // Max 25% for reading
+            console.log("File reading progress:", percentLoaded);
+            setUploadProgress(percentLoaded);
+          }
+        };
       });
       
       // Start reading
       reader.readAsDataURL(selectedImage);
-      
-      // Set intermediate progress
-      setUploadProgress(25);
+      console.log("Started FileReader...");
       
       // Wait for the file to be read
       const imageData = await imageDataPromise;
-      setUploadProgress(50);
+      console.log("Image data obtained, length:", imageData.length);
+      setUploadProgress(25);
       
-      console.log("File read complete, storing in Firestore...");
+      // Check if data is valid
+      if (!imageData || !imageData.startsWith('data:')) {
+        throw new Error("Invalid image data format");
+      }
       
       // Generate a unique ID for the image
       const timestamp = new Date().getTime();
       const imageId = `${userName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}`;
+      console.log("Generated image ID:", imageId);
       
       // Create image metadata
       const imageMetadata = {
@@ -302,25 +477,35 @@ export default function BioSite() {
         uploadedBy: userName
       };
       
-      // Update progress
-      setUploadProgress(75);
+      console.log("Storing in Firestore with metadata:", imageMetadata);
+      setUploadProgress(50);
       
       // Add the image data to Firestore
       const imageCollection = collection(db, "chat_images");
-      const docRef = await addDoc(imageCollection, {
-        data: imageData,
-        metadata: imageMetadata,
-        timestamp: serverTimestamp()
-      });
+      console.log("Attempting to write to Firestore collection 'chat_images'...");
       
-      console.log("Image data stored in Firestore with ID:", docRef.id);
-      
-      // Finish upload
-      setUploadProgress(100);
-      setUploading(false);
-      
-      // Return the document ID as our "image URL"
-      return docRef.id;
+      try {
+        const docRef = await addDoc(imageCollection, {
+          data: imageData,
+          metadata: imageMetadata,
+          timestamp: serverTimestamp()
+        });
+        
+        console.log("Image data stored in Firestore with ID:", docRef.id);
+        setUploadProgress(100);
+        setUploading(false);
+        
+        // Return the document ID as our "image URL"
+        return {
+          id: docRef.id,
+          isFirestoreImage: true
+        };
+      } catch (firestoreError) {
+        console.error("Firestore write error:", firestoreError);
+        console.error("Error code:", firestoreError.code);
+        console.error("Error message:", firestoreError.message);
+        throw firestoreError;
+      }
     } catch (error) {
       console.error("Error during direct upload:", error);
       setUploading(false);
@@ -347,7 +532,7 @@ export default function BioSite() {
 
     if (chatMode) {
       if (!isAdmin) {
-        let imageUrl = null;
+        let imageData = null;
         
         // Upload image first if one is selected
         if (selectedImage) {
@@ -356,7 +541,7 @@ export default function BioSite() {
             const tempMsg = {
               id: "temp-" + new Date().getTime(),
               userName,
-              user: trimmed,
+              user: trimmed || "Uploading image...",
               timestamp: new Date(),
               isTemp: true
             };
@@ -364,10 +549,13 @@ export default function BioSite() {
             // Add the temporary message to the chat log
             setChatLog(prev => [...prev, tempMsg]);
             
-            imageUrl = await uploadImage();
+            console.log("Starting image upload process...");
+            imageData = await uploadImage();
+            console.log("Upload completed, result:", imageData);
             
             // Remove the temporary message if upload failed
-            if (!imageUrl) {
+            if (!imageData) {
+              console.log("Upload failed, removing temporary message");
               setChatLog(prev => prev.filter(msg => msg.id !== tempMsg.id));
               return;
             }
@@ -379,22 +567,35 @@ export default function BioSite() {
         }
         
         try {
+          console.log("Adding message to Firestore with image data:", imageData);
+          
           // Add the actual message to Firestore
           const newMsg = {
             user: trimmed,
             userName,
-            timestamp: serverTimestamp(),
-            imageUrl: imageUrl
+            timestamp: serverTimestamp()
           };
           
-          await addDoc(chatCollection, newMsg);
+          // Add image data if we have it
+          if (imageData) {
+            if (typeof imageData === 'object' && imageData.isFirestoreImage) {
+              newMsg.imageUrl = imageData.id;
+              newMsg.isFirestoreImage = true;
+            } else {
+              newMsg.imageUrl = imageData;
+            }
+          }
+          
+          console.log("Final message object:", newMsg);
+          const docRef = await addDoc(chatCollection, newMsg);
+          console.log("Message added with ID:", docRef.id);
           
           try {
             if (userName !== "Abdallah") {
               // Only send email notifications for messages from regular users, not from admin
               await emailjs.send("service_vjg01x9", "template_venfmmq", {
                 user_name: userName,
-                message: trimmed + (imageUrl ? " [Image attached]" : ""),
+                message: trimmed + (imageData ? " [Image attached]" : ""),
                 to_email: "abdallahelabd05@gmail.com"
               }, "iqh5uRT5wWx4PA9DC");
             }
@@ -476,122 +677,92 @@ export default function BioSite() {
     setCommand("");
   };
 
-  const handleAdminImageUpload = async (e, participant) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Only accept images under 5MB
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image is too large. Maximum size is 5MB.");
-      return;
-    }
-    
-    // Display a temporary loading message
-    const timestamp = new Date().getTime();
-    const tempLoadingId = "temp-" + timestamp;
-    setChatLog(prev => [...prev, { 
-      id: tempLoadingId, 
-      user: "Uploading image...", 
-      userName: "Abdallah",
-      recipient: participant,
-      timestamp: new Date()
-    }]);
-    
+  // Test function to verify Firestore collections and write access
+  const testFirestoreAccess = async () => {
     try {
-      // Create a promise to read the file as data URL
-      const reader = new FileReader();
-      const imageDataPromise = new Promise((resolve, reject) => {
-        reader.onload = (e) => {
-          resolve(e.target.result);
-        };
-        reader.onerror = (e) => {
-          console.error("FileReader error:", e);
-          reject(new Error("Failed to read file"));
-        };
+      console.log("Testing Firestore access...");
+      
+      // Test chat collection
+      const testChatRef = collection(db, "chat");
+      const testChatDoc = await addDoc(testChatRef, {
+        test: true,
+        message: "Test message",
+        timestamp: serverTimestamp(),
+        userName: "TestUser"
       });
+      console.log("Successfully wrote to chat collection with ID:", testChatDoc.id);
       
-      // Start reading
-      reader.readAsDataURL(file);
-      
-      // Update the temporary message with progress
-      setChatLog(prev => prev.map(msg => 
-        msg.id === tempLoadingId 
-          ? { ...msg, user: `Uploading image... 25%` }
-          : msg
-      ));
-      
-      // Wait for the file to be read
-      const imageData = await imageDataPromise;
-      
-      // Update progress
-      setChatLog(prev => prev.map(msg => 
-        msg.id === tempLoadingId 
-          ? { ...msg, user: `Uploading image... 50%` }
-          : msg
-      ));
-      
-      console.log("Admin file read complete, storing in Firestore...");
-      
-      // Generate a unique ID for the image
-      const imageId = `Abdallah_${timestamp}`;
-      
-      // Create image metadata
-      const imageMetadata = {
-        id: imageId,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        timestamp: timestamp,
-        uploadedBy: "Abdallah",
-        recipient: participant
-      };
-      
-      // Update progress
-      setChatLog(prev => prev.map(msg => 
-        msg.id === tempLoadingId 
-          ? { ...msg, user: `Uploading image... 75%` }
-          : msg
-      ));
-      
-      // Add the image data to Firestore
-      const imageCollection = collection(db, "chat_images");
-      const docRef = await addDoc(imageCollection, {
-        data: imageData,
-        metadata: imageMetadata,
+      // Test chat_images collection
+      const testImagesRef = collection(db, "chat_images");
+      const testImageDoc = await addDoc(testImagesRef, {
+        test: true,
+        data: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", // 1x1 transparent pixel
+        metadata: {
+          name: "test.png",
+          type: "image/png",
+          timestamp: Date.now(),
+          uploadedBy: "TestUser"
+        },
         timestamp: serverTimestamp()
       });
+      console.log("Successfully wrote to chat_images collection with ID:", testImageDoc.id);
       
-      console.log("Admin image data stored in Firestore with ID:", docRef.id);
-      
-      // Update progress to 100%
-      setChatLog(prev => prev.map(msg => 
-        msg.id === tempLoadingId 
-          ? { ...msg, user: `Uploading image... 100%` }
-          : msg
-      ));
-      
-      // Remove the temporary message
-      setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
-      
-      // Add the image message to the chat
-      await addDoc(chatCollection, {
-        user: "",
-        recipient: participant,
-        userName: "Abdallah",
-        time: new Date().toLocaleTimeString(),
-        timestamp: serverTimestamp(),
-        seenByUser: false,
-        imageUrl: docRef.id, // Use document ID as the image reference
-        isFirestoreImage: true // Flag to indicate this is a Firestore-stored image
-      });
-      
+      // Test reading back the data
+      const docSnap = await getDoc(doc(db, "chat_images", testImageDoc.id));
+      if (docSnap.exists()) {
+        console.log("Successfully read back the test image document");
+        
+        // Clean up test data
+        await deleteDoc(doc(db, "chat", testChatDoc.id));
+        await deleteDoc(doc(db, "chat_images", testImageDoc.id));
+        console.log("Successfully cleaned up test documents");
+        
+        alert("Firestore test successful! Read and write access confirmed.");
+      } else {
+        throw new Error("Failed to read back the test image document");
+      }
     } catch (error) {
-      console.error("Error during direct admin upload:", error);
-      // Remove the temporary message on error
-      setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
-      alert(`Upload failed: ${error.message}`);
+      console.error("Firestore test failed:", error);
+      alert(`Firestore test failed: ${error.message}`);
     }
   };
+
+  // For debugging: Add a test button to the UI
+  useEffect(() => {
+    // Add a test button after the component mounts
+    const addTestButton = () => {
+      const existingButton = document.getElementById('firestore-test-button');
+      if (!existingButton) {
+        const button = document.createElement('button');
+        button.id = 'firestore-test-button';
+        button.innerText = 'Test Firestore Access';
+        button.style.position = 'fixed';
+        button.style.bottom = '10px';
+        button.style.right = '10px';
+        button.style.zIndex = '9999';
+        button.style.padding = '8px 16px';
+        button.style.backgroundColor = '#ff5722';
+        button.style.color = 'white';
+        button.style.border = 'none';
+        button.style.borderRadius = '4px';
+        button.style.cursor = 'pointer';
+        button.style.fontFamily = 'monospace';
+        button.style.fontSize = '12px';
+        button.onclick = testFirestoreAccess;
+        document.body.appendChild(button);
+      }
+    };
+    
+    addTestButton();
+    
+    return () => {
+      // Remove the test button when component unmounts
+      const existingButton = document.getElementById('firestore-test-button');
+      if (existingButton) {
+        existingButton.remove();
+      }
+    };
+  }, []);
 
   return (
     <main className="min-h-screen bg-[#020b02] text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base w-full bg-[radial-gradient(ellipse_at_center,_#042f1d_0%,_#010d04_100%)]">
