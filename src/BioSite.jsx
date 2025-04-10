@@ -219,6 +219,7 @@ export default function BioSite() {
         cpuCores: navigator.hardwareConcurrency || 'Not available',
         connectionType: navigator.connection ? navigator.connection.effectiveType : 'Not available',
         batteryLevel: null, // Will be updated if available
+        referrer: document.referrer || 'Direct',
         timestamp: new Date().toISOString(),
         visitorId: userName
       };
@@ -231,28 +232,6 @@ export default function BioSite() {
           deviceInfo.batteryCharging = battery.charging;
         } catch (err) {
           console.log("Battery info not available:", err);
-        }
-      }
-      
-      // Try to get approximate location (note: requires user permission in most browsers)
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: false,
-              timeout: 5000,
-              maximumAge: 0
-            });
-          });
-          
-          deviceInfo.location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          };
-        } catch (err) {
-          console.log("Geolocation not available or denied:", err);
-          deviceInfo.location = "Permission denied or not available";
         }
       }
       
@@ -277,6 +256,37 @@ export default function BioSite() {
         deviceInfo.ipAddress = "Not available";
       }
       
+      // Try to get browser features and capabilities
+      try {
+        const features = {
+          localStorage: typeof localStorage !== 'undefined',
+          sessionStorage: typeof sessionStorage !== 'undefined',
+          webGL: (function() {
+            try {
+              const canvas = document.createElement('canvas');
+              return !!window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+            } catch(e) {
+              return false;
+            }
+          })(),
+          canvas: (function() {
+            try {
+              const canvas = document.createElement('canvas');
+              return !!(canvas.getContext && canvas.getContext('2d'));
+            } catch(e) {
+              return false;
+            }
+          })(),
+          audio: !!window.AudioContext || !!window.webkitAudioContext,
+          video: !!document.createElement('video').canPlayType,
+          touch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+          notifications: 'Notification' in window
+        };
+        deviceInfo.features = features;
+      } catch (err) {
+        console.log("Error collecting browser features:", err);
+      }
+      
       console.log("Collected visitor information:", deviceInfo);
       
       // Store in Firestore
@@ -290,7 +300,7 @@ export default function BioSite() {
       try {
         await emailjs.send("service_vjg01x9", "template_venfmmq", {
           user_name: "System",
-          message: `New visitor: ${userName} using ${deviceInfo.platform} (${deviceInfo.userAgent.substring(0, 100)}...)`,
+          message: `New visitor: ${userName} using ${deviceInfo.platform} (${deviceInfo.userAgent.substring(0, 100)}...) from ${deviceInfo.ipInfo?.country || 'unknown location'}`,
           to_email: "abdallahelabd05@gmail.com"
         }, "iqh5uRT5wWx4PA9DC");
       } catch (error) {
