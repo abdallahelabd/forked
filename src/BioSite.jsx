@@ -12,7 +12,8 @@ import {
   orderBy,
   doc,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  getDoc
 } from "firebase/firestore";
 import {
   getStorage,
@@ -38,6 +39,63 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const chatCollection = collection(db, "chat");
+
+// FirestoreImage component to render images stored directly in Firestore
+const FirestoreImage = ({ imageId, className }) => {
+  const [imageData, setImageData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchImage = async () => {
+      try {
+        setLoading(true);
+        const docRef = doc(db, "chat_images", imageId);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          setImageData(docSnap.data().data);
+        } else {
+          setError("Image not found");
+          console.error("No image found with ID:", imageId);
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching image:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (imageId) {
+      fetchImage();
+    }
+  }, [imageId]);
+  
+  if (loading) return <div className="text-green-400 text-xs">Loading image...</div>;
+  if (error) return <div className="text-red-400 text-xs">Error: {error}</div>;
+  if (!imageData) return <div className="text-yellow-400 text-xs">Image not available</div>;
+  
+  return (
+    <img 
+      src={imageData}
+      alt="Attached" 
+      className={className}
+      onClick={() => {
+        // Open image in new tab
+        const win = window.open();
+        win.document.write(`
+          <html>
+            <head><title>Image</title></head>
+            <body style="margin: 0; display: flex; justify-content: center; align-items: center; background: #000;">
+              <img src="${imageData}" style="max-width: 100%; max-height: 100vh;" />
+            </body>
+          </html>
+        `);
+      }}
+    />
+  );
+};
 
 function PinnedCommands({ setCommand, inputRef }) {
   const pinnedCommands = ["hello", "experience", "skills", "chat"];
@@ -197,87 +255,77 @@ export default function BioSite() {
     setUploadProgress(0);
     
     try {
-      // Create a unique filename with only safe characters
+      // Check file size again
+      if (selectedImage.size > 5 * 1024 * 1024) {
+        alert("Image is too large. Maximum size is 5MB.");
+        setUploading(false);
+        return null;
+      }
+      
+      console.log("Starting upload directly to Firestore...");
+      
+      // Create a promise to read the file as data URL
+      const reader = new FileReader();
+      const imageDataPromise = new Promise((resolve, reject) => {
+        reader.onload = (e) => {
+          resolve(e.target.result);
+        };
+        reader.onerror = (e) => {
+          console.error("FileReader error:", e);
+          reject(new Error("Failed to read file"));
+        };
+      });
+      
+      // Start reading
+      reader.readAsDataURL(selectedImage);
+      
+      // Set intermediate progress
+      setUploadProgress(25);
+      
+      // Wait for the file to be read
+      const imageData = await imageDataPromise;
+      setUploadProgress(50);
+      
+      console.log("File read complete, storing in Firestore...");
+      
+      // Generate a unique ID for the image
       const timestamp = new Date().getTime();
-      const safeFileName = selectedImage.name.replace(/[^a-zA-Z0-9.]/g, '_');
-      const filename = `${userName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${safeFileName}`;
-      const fileRef = storageRef(storage, `chat_images/${filename}`);
+      const imageId = `${userName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}`;
       
-      console.log("Starting upload to", `chat_images/${filename}`);
-      
-      // Create file metadata including the content type
-      const metadata = {
-        contentType: selectedImage.type,
+      // Create image metadata
+      const imageMetadata = {
+        id: imageId,
+        name: selectedImage.name,
+        type: selectedImage.type,
+        size: selectedImage.size,
+        timestamp: timestamp,
+        uploadedBy: userName
       };
       
-      // Upload the file with metadata
-      const uploadTask = uploadBytesResumable(fileRef, selectedImage, metadata);
+      // Update progress
+      setUploadProgress(75);
       
-      return new Promise((resolve, reject) => {
-        uploadTask.on(
-          'state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log('Upload is ' + progress + '% done');
-            setUploadProgress(Math.round(progress));
-            
-            switch (snapshot.state) {
-              case 'paused':
-                console.log('Upload is paused');
-                break;
-              case 'running':
-                console.log('Upload is running');
-                break;
-              default:
-                break;
-            }
-          },
-          (error) => {
-            // Handle unsuccessful uploads
-            console.error('Upload error:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            setUploading(false);
-            
-            let errorMessage = 'Upload failed';
-            switch (error.code) {
-              case 'storage/unauthorized':
-                errorMessage = 'User does not have permission to access the storage';
-                break;
-              case 'storage/canceled':
-                errorMessage = 'Upload was canceled';
-                break;
-              case 'storage/unknown':
-                errorMessage = 'Unknown error occurred';
-                break;
-              default:
-                errorMessage = `Error: ${error.message}`;
-            }
-            
-            alert(errorMessage);
-            reject(error);
-          },
-          () => {
-            // Handle successful uploads
-            console.log('Upload completed successfully');
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-              console.log('File available at', downloadURL);
-              setUploading(false);
-              setUploadProgress(100);
-              resolve(downloadURL);
-            }).catch((error) => {
-              console.error('Error getting download URL:', error);
-              setUploading(false);
-              alert('Error getting download URL: ' + error.message);
-              reject(error);
-            });
-          }
-        );
+      // Add the image data to Firestore
+      const imageCollection = collection(db, "chat_images");
+      const docRef = await addDoc(imageCollection, {
+        data: imageData,
+        metadata: imageMetadata,
+        timestamp: serverTimestamp()
       });
-    } catch (error) {
-      console.error('Error setting up upload:', error);
+      
+      console.log("Image data stored in Firestore with ID:", docRef.id);
+      
+      // Finish upload
+      setUploadProgress(100);
       setUploading(false);
-      alert('Error setting up upload: ' + error.message);
+      
+      // Return the document ID as our "image URL"
+      return docRef.id;
+    } catch (error) {
+      console.error("Error during direct upload:", error);
+      setUploading(false);
+      setUploadProgress(0);
+      alert(`Upload failed: ${error.message}`);
       return null;
     }
   };
@@ -438,20 +486,8 @@ export default function BioSite() {
       return;
     }
     
-    // Create a unique filename with only safe characters
-    const timestamp = new Date().getTime();
-    const safeFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-    const filename = `Abdallah_${timestamp}_${safeFileName}`;
-    const fileRef = storageRef(storage, `chat_images/${filename}`);
-    
-    console.log("Starting admin upload to", `chat_images/${filename}`);
-    
-    // Create file metadata including the content type
-    const metadata = {
-      contentType: file.type,
-    };
-    
     // Display a temporary loading message
+    const timestamp = new Date().getTime();
     const tempLoadingId = "temp-" + timestamp;
     setChatLog(prev => [...prev, { 
       id: tempLoadingId, 
@@ -461,90 +497,100 @@ export default function BioSite() {
       timestamp: new Date()
     }]);
     
-    // Upload the file with metadata
-    const uploadTask = uploadBytesResumable(fileRef, file, metadata);
-    
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log('Admin upload is ' + progress + '% done');
-        
-        // Update the temporary message with progress
-        setChatLog(prev => prev.map(msg => 
-          msg.id === tempLoadingId 
-            ? { ...msg, user: `Uploading image... ${Math.round(progress)}%` }
-            : msg
-        ));
-        
-        switch (snapshot.state) {
-          case 'paused':
-            console.log('Admin upload is paused');
-            break;
-          case 'running':
-            console.log('Admin upload is running');
-            break;
-          default:
-            break;
-        }
-      },
-      (error) => {
-        // Handle unsuccessful uploads
-        console.error('Admin upload error:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        
-        // Remove the temporary message on error
-        setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
-        
-        let errorMessage = 'Upload failed';
-        switch (error.code) {
-          case 'storage/unauthorized':
-            errorMessage = 'User does not have permission to access the storage';
-            break;
-          case 'storage/canceled':
-            errorMessage = 'Upload was canceled';
-            break;
-          case 'storage/unknown':
-            errorMessage = 'Unknown error occurred';
-            break;
-          default:
-            errorMessage = `Error: ${error.message}`;
-        }
-        
-        alert(errorMessage);
-      },
-      () => {
-        // Handle successful uploads
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          console.log('Admin file available at', downloadURL);
-          
-          // Remove the temporary message
-          setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
-          
-          const time = new Date().toLocaleTimeString();
-          
-          // Add the image message to Firestore
-          addDoc(chatCollection, {
-            user: "",
-            recipient: participant,
-            userName: "Abdallah",
-            time,
-            timestamp: serverTimestamp(),
-            seenByUser: false,
-            imageUrl: downloadURL
-          }).catch(error => {
-            console.error("Failed to add image message to Firestore:", error);
-            alert("Failed to save image message: " + error.message);
-          });
-        }).catch((error) => {
-          console.error('Error getting admin download URL:', error);
-          // Remove the temporary message on error
-          setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
-          alert('Error getting download URL: ' + error.message);
-        });
-      }
-    );
+    try {
+      // Create a promise to read the file as data URL
+      const reader = new FileReader();
+      const imageDataPromise = new Promise((resolve, reject) => {
+        reader.onload = (e) => {
+          resolve(e.target.result);
+        };
+        reader.onerror = (e) => {
+          console.error("FileReader error:", e);
+          reject(new Error("Failed to read file"));
+        };
+      });
+      
+      // Start reading
+      reader.readAsDataURL(file);
+      
+      // Update the temporary message with progress
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 25%` }
+          : msg
+      ));
+      
+      // Wait for the file to be read
+      const imageData = await imageDataPromise;
+      
+      // Update progress
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 50%` }
+          : msg
+      ));
+      
+      console.log("Admin file read complete, storing in Firestore...");
+      
+      // Generate a unique ID for the image
+      const imageId = `Abdallah_${timestamp}`;
+      
+      // Create image metadata
+      const imageMetadata = {
+        id: imageId,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        timestamp: timestamp,
+        uploadedBy: "Abdallah",
+        recipient: participant
+      };
+      
+      // Update progress
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 75%` }
+          : msg
+      ));
+      
+      // Add the image data to Firestore
+      const imageCollection = collection(db, "chat_images");
+      const docRef = await addDoc(imageCollection, {
+        data: imageData,
+        metadata: imageMetadata,
+        timestamp: serverTimestamp()
+      });
+      
+      console.log("Admin image data stored in Firestore with ID:", docRef.id);
+      
+      // Update progress to 100%
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 100%` }
+          : msg
+      ));
+      
+      // Remove the temporary message
+      setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
+      
+      // Add the image message to the chat
+      await addDoc(chatCollection, {
+        user: "",
+        recipient: participant,
+        userName: "Abdallah",
+        time: new Date().toLocaleTimeString(),
+        timestamp: serverTimestamp(),
+        seenByUser: false,
+        imageUrl: docRef.id, // Use document ID as the image reference
+        isFirestoreImage: true // Flag to indicate this is a Firestore-stored image
+      });
+      
+    } catch (error) {
+      console.error("Error during direct admin upload:", error);
+      // Remove the temporary message on error
+      setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
+      alert(`Upload failed: ${error.message}`);
+    }
   };
 
   return (
@@ -668,12 +714,21 @@ export default function BioSite() {
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.3 }}
                             >
-                              <img 
-                                src={log.imageUrl} 
-                                alt="Attached" 
-                                className="rounded-lg border-2 border-green-600 max-w-full max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                                onClick={() => window.open(log.imageUrl, '_blank')}
-                              />
+                              {log.isFirestoreImage ? (
+                                // For images stored in Firestore
+                                <FirestoreImage 
+                                  imageId={log.imageUrl}
+                                  className="rounded-lg border-2 border-green-600 max-w-full max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity" 
+                                />
+                              ) : (
+                                // For images stored in Firebase Storage
+                                <img 
+                                  src={log.imageUrl} 
+                                  alt="Attached" 
+                                  className="rounded-lg border-2 border-green-600 max-w-full max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                  onClick={() => window.open(log.imageUrl, '_blank')}
+                                />
+                              )}
                             </motion.div>
                           </div>
                         )}
@@ -934,12 +989,21 @@ export default function BioSite() {
                           {/* Display image in admin panel */}
                           {msg.imageUrl && (
                             <div className="mt-2">
-                              <img 
-                                src={msg.imageUrl} 
-                                alt="Attached" 
-                                className="rounded-lg border border-green-600 max-w-full max-h-32 object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                                onClick={() => window.open(msg.imageUrl, '_blank')}
-                              />
+                              {msg.isFirestoreImage ? (
+                                // For images stored in Firestore
+                                <FirestoreImage 
+                                  imageId={msg.imageUrl}
+                                  className="rounded-lg border border-green-600 max-w-full max-h-32 object-contain cursor-pointer hover:opacity-90 transition-opacity" 
+                                />
+                              ) : (
+                                // For images stored in Firebase Storage
+                                <img 
+                                  src={msg.imageUrl} 
+                                  alt="Attached" 
+                                  className="rounded-lg border border-green-600 max-w-full max-h-32 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                  onClick={() => window.open(msg.imageUrl, '_blank')}
+                                />
+                              )}
                             </div>
                           )}
                           
