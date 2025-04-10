@@ -195,39 +195,55 @@ export default function BioSite() {
     setUploading(true);
     setUploadProgress(0);
     
-    // Create a unique filename
-    const timestamp = new Date().getTime();
-    const filename = `${userName}_${timestamp}_${selectedImage.name}`;
-    const storageRef = ref(storage, `chat_images/${filename}`);
-    
-    // Upload image with progress tracking
-    const uploadTask = uploadBytesResumable(storageRef, selectedImage);
-    
-    return new Promise((resolve, reject) => {
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(Math.round(progress));
-        },
-        (error) => {
-          console.error("Upload failed:", error);
-          setUploading(false);
-          reject(error);
-        },
-        async () => {
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+    try {
+      // Create a unique filename
+      const timestamp = new Date().getTime();
+      const filename = `${userName}_${timestamp}_${selectedImage.name}`;
+      const storageRef = ref(storage, `chat_images/${filename}`);
+      
+      console.log("Starting upload to", `chat_images/${filename}`);
+      
+      // Upload image with progress tracking
+      const uploadTask = uploadBytesResumable(storageRef, selectedImage);
+      
+      return new Promise((resolve, reject) => {
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log("Upload progress:", progress);
+            setUploadProgress(Math.round(progress));
+          },
+          (error) => {
+            console.error("Upload failed:", error);
+            console.error("Error code:", error.code);
+            console.error("Error message:", error.message);
             setUploading(false);
-            setUploadProgress(100);
-            resolve(downloadURL);
-          } catch (error) {
-            console.error("Failed to get download URL:", error);
-            setUploading(false);
+            alert(`Upload failed: ${error.message}`);
             reject(error);
+          },
+          async () => {
+            try {
+              console.log("Upload completed successfully");
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              console.log("Download URL obtained:", downloadURL);
+              setUploading(false);
+              setUploadProgress(100);
+              resolve(downloadURL);
+            } catch (error) {
+              console.error("Failed to get download URL:", error);
+              setUploading(false);
+              alert(`Failed to get download URL: ${error.message}`);
+              reject(error);
+            }
           }
-        }
-      );
-    });
+        );
+      });
+    } catch (error) {
+      console.error("Error setting up upload:", error);
+      setUploading(false);
+      alert(`Error setting up upload: ${error.message}`);
+      return null;
+    }
   };
 
   const handleCommand = async () => {
@@ -372,6 +388,8 @@ export default function BioSite() {
     const filename = `Abdallah_${timestamp}_${file.name}`;
     const storageRef = ref(storage, `chat_images/${filename}`);
     
+    console.log("Starting admin upload to", `chat_images/${filename}`);
+    
     // Upload with progress indicator
     const uploadTask = uploadBytesResumable(storageRef, file);
     
@@ -388,6 +406,7 @@ export default function BioSite() {
     uploadTask.on('state_changed', 
       (snapshot) => {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log("Admin upload progress:", progress);
         // Update the temporary message with progress
         setChatLog(prev => prev.map(msg => 
           msg.id === tempLoadingId 
@@ -396,17 +415,21 @@ export default function BioSite() {
         ));
       },
       (error) => {
-        console.error("Upload failed:", error);
+        console.error("Admin upload failed:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
         // Remove the temporary message on error
         setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
-        alert("Failed to upload image. Please try again.");
+        alert(`Failed to upload image: ${error.message}`);
       },
       async () => {
         try {
+          console.log("Admin upload completed successfully");
           // Remove the temporary message
           setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
           
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          console.log("Admin download URL obtained:", downloadURL);
           const time = new Date().toLocaleTimeString();
           
           // Add the image message to Firestore
@@ -421,7 +444,7 @@ export default function BioSite() {
           });
         } catch (error) {
           console.error("Failed to add image message:", error);
-          alert("Failed to send image. Please try again.");
+          alert(`Failed to send image: ${error.message}`);
         }
       }
     );
