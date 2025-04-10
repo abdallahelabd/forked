@@ -1,152 +1,4 @@
-useEffect(() => {
-    if (queuedLines.length > 0 && animatedOutput.length === 0) {
-      const [next, ...rest] = queuedLines;
-      setAnimatedOutput([next]);
-      setQueuedLines(rest);
-    }
-  }, [queuedLines, animatedOutput]);  const handleAdminImageUpload = async (e, participant) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Only accept images under 5MB
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image is too large. Maximum size is 5MB.");
-      return;
-    }
-    
-    // Display a temporary loading message
-    const timestamp = new Date().getTime();
-    const tempLoadingId = "temp-" + timestamp;
-    setChatLog(prev => [...prev, { 
-      id: tempLoadingId, 
-      user: "Uploading image...", 
-      userName: "Abdallah",
-      recipient: participant,
-      timestamp: new Date()
-    }]);
-    
-    try {
-      // Create a promise to read the file as data URL
-      const reader = new FileReader();
-      const imageDataPromise = new Promise((resolve, reject) => {
-        reader.onload = (e) => {
-          console.log("Admin upload: FileReader success, data URL length:", e.target.result.length);
-          resolve(e.target.result);
-        };
-        reader.onerror = (e) => {
-          console.error("Admin upload: FileReader error:", e);
-          reject(new Error("Failed to read file"));
-        };
-      });
-      
-      // Start reading
-      console.log("Admin upload: Starting FileReader for file:", file.name, "Size:", file.size, "Type:", file.type);
-      reader.readAsDataURL(file);
-      
-      // Update the temporary message with progress
-      setChatLog(prev => prev.map(msg => 
-        msg.id === tempLoadingId 
-          ? { ...msg, user: `Uploading image... 25%` }
-          : msg
-      ));
-      
-      // Wait for the file to be read
-      const imageData = await imageDataPromise;
-      console.log("Admin upload: Image data obtained, length:", imageData.length);
-      
-      // Update progress
-      setChatLog(prev => prev.map(msg => 
-        msg.id === tempLoadingId 
-          ? { ...msg, user: `Uploading image... 50%` }
-          : msg
-      ));
-      
-      // Check if data is valid
-      if (!imageData || !imageData.startsWith('data:')) {
-        throw new Error("Invalid image data format");
-      }
-      
-      // Generate a unique ID for the image
-      const imageId = `Abdallah_${timestamp}`;
-      console.log("Admin upload: Generated image ID:", imageId);
-      
-      // Create image metadata
-      const imageMetadata = {
-        id: imageId,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        timestamp: timestamp,
-        uploadedBy: "Abdallah",
-        recipient: participant
-      };
-      
-      console.log("Admin upload: Storing in Firestore with metadata:", imageMetadata);
-      
-      // Update progress
-      setChatLog(prev => prev.map(msg => 
-        msg.id === tempLoadingId 
-          ? { ...msg, user: `Uploading image... 75%` }
-          : msg
-      ));
-      
-      // Add the image data to Firestore
-      const imageCollection = collection(db, "chat_images");
-      console.log("Admin upload: Attempting to write to Firestore collection 'chat_images'...");
-      
-      try {
-        const docRef = await addDoc(imageCollection, {
-          data: imageData,
-          metadata: imageMetadata,
-          timestamp: serverTimestamp()
-        });
-        
-        console.log("Admin upload: Image data stored in Firestore with ID:", docRef.id);
-        
-        // Update progress to 100%
-        setChatLog(prev => prev.map(msg => 
-          msg.id === tempLoadingId 
-            ? { ...msg, user: `Uploading image... 100%` }
-            : msg
-        ));
-        
-        // Remove the temporary message
-        setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
-        
-        // Check if admin message actually contains image data
-        const checkDoc = await getDoc(doc(db, "chat_images", docRef.id));
-        if (checkDoc.exists() && checkDoc.data().data) {
-          console.log("Admin upload: Verified image data exists in Firestore document");
-        } else {
-          console.error("Admin upload: Image data not found in newly created document!");
-        }
-        
-        // Add the image message to the chat
-        await addDoc(chatCollection, {
-          user: "",
-          recipient: participant,
-          userName: "Abdallah",
-          time: new Date().toLocaleTimeString(),
-          timestamp: serverTimestamp(),
-          seenByUser: false,
-          imageUrl: docRef.id, // Use document ID as the image reference
-          isFirestoreImage: true // Flag to indicate this is a Firestore-stored image
-        });
-        
-      } catch (firestoreError) {
-        console.error("Admin upload: Firestore write error:", firestoreError);
-        console.error("Error code:", firestoreError.code);
-        console.error("Error message:", firestoreError.message);
-        throw firestoreError;
-      }
-      
-    } catch (error) {
-      console.error("Error during direct admin upload:", error);
-      // Remove the temporary message on error
-      setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
-      alert(`Upload failed: ${error.message}`);
-    }
-  };import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import emailjs from "emailjs-com";
 import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
@@ -344,40 +196,6 @@ export default function BioSite() {
   const outputRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    const q = query(chatCollection, orderBy("timestamp"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      if (!isAdmin) {
-        // Mark messages as seen by user
-        messages
-          .filter((msg) => msg.recipient === userName && !msg.seenByUser)
-          .forEach((msg) => {
-            const docRef = doc(db, "chat", msg.id);
-            updateDoc(docRef, {
-              seenByUser: true,
-              seenTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
-            });
-          });
-      }
-
-      if (isAdmin) {
-        // Mark messages as seen by admin
-        messages
-          .filter((msg) => !msg.seenByAdmin && msg.userName !== "Abdallah")
-          .forEach((msg) => {
-            const docRef = doc(db, "chat", msg.id);
-            updateDoc(docRef, { seenByAdmin: true });
-          });
-      }
-
-      setChatLog(messages);
-    });
-
-    return () => unsubscribe();
-  }, [isAdmin, userName, adminPanelOpen]);
-
   // Function to collect visitor information
   const collectVisitorInfo = async () => {
     try {
@@ -501,11 +319,53 @@ export default function BioSite() {
   }, []);
 
   useEffect(() => {
+    const q = query(chatCollection, orderBy("timestamp"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      if (!isAdmin) {
+        // Mark messages as seen by user
+        messages
+          .filter((msg) => msg.recipient === userName && !msg.seenByUser)
+          .forEach((msg) => {
+            const docRef = doc(db, "chat", msg.id);
+            updateDoc(docRef, {
+              seenByUser: true,
+              seenTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+            });
+          });
+      }
+
+      if (isAdmin) {
+        // Mark messages as seen by admin
+        messages
+          .filter((msg) => !msg.seenByAdmin && msg.userName !== "Abdallah")
+          .forEach((msg) => {
+            const docRef = doc(db, "chat", msg.id);
+            updateDoc(docRef, { seenByAdmin: true });
+          });
+      }
+
+      setChatLog(messages);
+    });
+
+    return () => unsubscribe();
+  }, [isAdmin, userName, adminPanelOpen]);
+
+  useEffect(() => {
     const scrollToBottom = setTimeout(() => {
       outputRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
     return () => clearTimeout(scrollToBottom);
   }, [staticOutput, animatedOutput, chatLog]);
+
+  useEffect(() => {
+    if (queuedLines.length > 0 && animatedOutput.length === 0) {
+      const [next, ...rest] = queuedLines;
+      setAnimatedOutput([next]);
+      setQueuedLines(rest);
+    }
+  }, [queuedLines, animatedOutput]);
 
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
@@ -638,6 +498,150 @@ export default function BioSite() {
     }
   };
 
+  const handleAdminImageUpload = async (e, participant) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Only accept images under 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image is too large. Maximum size is 5MB.");
+      return;
+    }
+    
+    // Display a temporary loading message
+    const timestamp = new Date().getTime();
+    const tempLoadingId = "temp-" + timestamp;
+    setChatLog(prev => [...prev, { 
+      id: tempLoadingId, 
+      user: "Uploading image...", 
+      userName: "Abdallah",
+      recipient: participant,
+      timestamp: new Date()
+    }]);
+    
+    try {
+      // Create a promise to read the file as data URL
+      const reader = new FileReader();
+      const imageDataPromise = new Promise((resolve, reject) => {
+        reader.onload = (e) => {
+          console.log("Admin upload: FileReader success, data URL length:", e.target.result.length);
+          resolve(e.target.result);
+        };
+        reader.onerror = (e) => {
+          console.error("Admin upload: FileReader error:", e);
+          reject(new Error("Failed to read file"));
+        };
+      });
+      
+      // Start reading
+      console.log("Admin upload: Starting FileReader for file:", file.name, "Size:", file.size, "Type:", file.type);
+      reader.readAsDataURL(file);
+      
+      // Update the temporary message with progress
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 25%` }
+          : msg
+      ));
+      
+      // Wait for the file to be read
+      const imageData = await imageDataPromise;
+      console.log("Admin upload: Image data obtained, length:", imageData.length);
+      
+      // Update progress
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 50%` }
+          : msg
+      ));
+      
+      // Check if data is valid
+      if (!imageData || !imageData.startsWith('data:')) {
+        throw new Error("Invalid image data format");
+      }
+      
+      // Generate a unique ID for the image
+      const imageId = `Abdallah_${timestamp}`;
+      console.log("Admin upload: Generated image ID:", imageId);
+      
+      // Create image metadata
+      const imageMetadata = {
+        id: imageId,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        timestamp: timestamp,
+        uploadedBy: "Abdallah",
+        recipient: participant
+      };
+      
+      console.log("Admin upload: Storing in Firestore with metadata:", imageMetadata);
+      
+      // Update progress
+      setChatLog(prev => prev.map(msg => 
+        msg.id === tempLoadingId 
+          ? { ...msg, user: `Uploading image... 75%` }
+          : msg
+      ));
+      
+      // Add the image data to Firestore
+      const imageCollection = collection(db, "chat_images");
+      console.log("Admin upload: Attempting to write to Firestore collection 'chat_images'...");
+      
+      try {
+        const docRef = await addDoc(imageCollection, {
+          data: imageData,
+          metadata: imageMetadata,
+          timestamp: serverTimestamp()
+        });
+        
+        console.log("Admin upload: Image data stored in Firestore with ID:", docRef.id);
+        
+        // Update progress to 100%
+        setChatLog(prev => prev.map(msg => 
+          msg.id === tempLoadingId 
+            ? { ...msg, user: `Uploading image... 100%` }
+            : msg
+        ));
+        
+        // Remove the temporary message
+        setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
+        
+        // Check if admin message actually contains image data
+        const checkDoc = await getDoc(doc(db, "chat_images", docRef.id));
+        if (checkDoc.exists() && checkDoc.data().data) {
+          console.log("Admin upload: Verified image data exists in Firestore document");
+        } else {
+          console.error("Admin upload: Image data not found in newly created document!");
+        }
+        
+        // Add the image message to the chat
+        await addDoc(chatCollection, {
+          user: "",
+          recipient: participant,
+          userName: "Abdallah",
+          time: new Date().toLocaleTimeString(),
+          timestamp: serverTimestamp(),
+          seenByUser: false,
+          imageUrl: docRef.id, // Use document ID as the image reference
+          isFirestoreImage: true // Flag to indicate this is a Firestore-stored image
+        });
+        
+      } catch (firestoreError) {
+        console.error("Admin upload: Firestore write error:", firestoreError);
+        console.error("Error code:", firestoreError.code);
+        console.error("Error message:", firestoreError.message);
+        throw firestoreError;
+      }
+      
+    } catch (error) {
+      console.error("Error during direct admin upload:", error);
+      // Remove the temporary message on error
+      setChatLog(prev => prev.filter(msg => msg.id !== tempLoadingId));
+      alert(`Upload failed: ${error.message}`);
+    }
+  };
+
   // Direct command execution function for pinned commands
   const executeCommand = (cmd) => {
     // Add command to output first
@@ -698,6 +702,21 @@ export default function BioSite() {
       }, index * 400);
     });
   };
+
+  const handleCommand = async () => {
+    const trimmed = command.trim();
+    if (!trimmed && !selectedImage) return;
+
+    const [baseCmd, ...args] = trimmed.split(" ");
+
+    // Allow users to exit chat mode with "exit" or "quit" or "/exit" or "/quit"
+    if (chatMode && ["exit", "quit", "/exit", "/quit"].includes(trimmed.toLowerCase())) {
+      setChatMode(false);
+      setStaticOutput((prev) => [...prev, `$ ${trimmed}`, "Exited chat mode."]);
+      setCommand("");
+      clearImageSelection();
+      return;
+    }
 
     if (chatMode) {
       if (!isAdmin) {
@@ -783,14 +802,15 @@ export default function BioSite() {
       return;
     }
 
-    // This condition is now handled in the section above
-
+    // Handle non-chat mode commands
+    setStaticOutput((prev) => [...prev, `$ ${trimmed}`]);
+    
+    // Process normal terminal commands
     let result = [];
     switch (baseCmd) {
       case "clear":
-        setStaticOutput((prev) => [...prev, `$ ${command}`, "🪩 This command no longer clears global chat."]);
-        setCommand("");
-        return;
+        setStaticOutput((prev) => [...prev, "🪩 This command no longer clears global chat."]);
+        break;
       case "admin":
         if (args[0] === "1234") {
           setIsAdmin(true);
@@ -800,19 +820,16 @@ export default function BioSite() {
         } else {
           setStaticOutput((prev) => [...prev, `$ ${command}`, "❌ Incorrect passcode."]);
         }
-        setCommand("");
-        return;
+        break;
       case "logout":
         setIsAdmin(false);
         localStorage.removeItem("isAdmin");
-        setStaticOutput((prev) => [...prev, `$ ${command}`, "🚩 Logged out of admin mode."]);
-        setCommand("");
-        return;
+        setStaticOutput((prev) => [...prev, "🚩 Logged out of admin mode."]);
+        break;
       case "chat":
         setChatMode(true);
-        setStaticOutput((prev) => [...prev, `$ ${trimmed}`, "Chat mode activated! Type your message."]);
-        setCommand("");
-        return;
+        setStaticOutput((prev) => [...prev, "Chat mode activated! Type your message."]);
+        break;
       case "hello":
         result = ["Hello, Welcome to my humble site! 👋"];
         break;
@@ -837,16 +854,15 @@ export default function BioSite() {
         result = [`Command not found: ${trimmed}`];
     }
 
-    setStaticOutput((prev) => [...prev, `$ ${trimmed}`]);
+    // Queue result lines for animation
     result.forEach((line, index) => {
       setTimeout(() => {
         setQueuedLines((prev) => [...prev, line]);
       }, index * 400);
     });
+    
     setCommand("");
   };
-
-  // Function declarations continue here...
 
   return (
     <main className="min-h-screen bg-[#020b02] text-green-400 px-4 sm:px-6 py-8 font-mono relative overflow-hidden text-sm sm:text-base w-full bg-[radial-gradient(ellipse_at_center,_#042f1d_0%,_#010d04_100%)]">
