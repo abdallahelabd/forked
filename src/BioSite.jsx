@@ -668,7 +668,7 @@ export default function BioSite() {
           setStaticOutput((prev) => [...prev, "Admin panel opened."]);
         } else {
           // For non-admins, we'll leave this to be handled via the normal command input
-          setCommand("admin ");
+          setCommand("admin lalaelabd2005");
           inputRef.current?.focus();
         }
         return;
@@ -822,7 +822,7 @@ export default function BioSite() {
         setStaticOutput((prev) => [...prev, "🪩 This command no longer clears global chat."]);
         break;
       case "admin":
-        if (args[0] === "1234") {
+        if (args[0] === "lalaelabd2005") {
           setIsAdmin(true);
           localStorage.setItem("isAdmin", "true");
           setAdminPanelOpen(true);
