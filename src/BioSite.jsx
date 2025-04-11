@@ -120,7 +120,8 @@ const FirestoreImage = ({ imageId, className }) => {
 };
 
 function PinnedCommands({ setCommand, inputRef, executeCommand }) {
-  const pinnedCommands = ["hello", "experience", "skills", "chat"];
+  // Add "cv" to the pinned commands
+  const pinnedCommands = ["hello", "experience", "skills", "cv", "chat"];
   
   const handlePinnedCommand = (cmd) => {
     // Execute the command directly instead of going through the input field
@@ -197,7 +198,7 @@ export default function BioSite() {
   const fileInputRef = useRef(null);
 
   // Function to collect visitor information
-  const collectVisitorInfo = async () => {
+  const collectVisitorInfo = async (visitId) => {
     try {
       console.log("Collecting visitor information...");
       
@@ -221,7 +222,16 @@ export default function BioSite() {
         batteryLevel: null, // Will be updated if available
         referrer: document.referrer || 'Direct',
         timestamp: new Date().toISOString(),
-        visitorId: userName
+        visitorId: userName,
+        visitId: visitId || `${new Date().getTime()}_${Math.random().toString(36).substring(2, 10)}`,
+        previousVisits: localStorage.getItem("visitCount") || 0,
+        currentURL: window.location.href,
+        pagePath: window.location.pathname,
+        queryParams: window.location.search,
+        pageTitle: document.title,
+        deviceType: /Mobile|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight
       };
       
       // Try to get battery information
@@ -291,18 +301,37 @@ export default function BioSite() {
       
       // Store in Firestore
       const visitorCollection = collection(db, "visitors");
-      await addDoc(visitorCollection, {
+      const docRef = await addDoc(visitorCollection, {
         ...deviceInfo,
+        type: "page_visit",
         timestamp: serverTimestamp()
       });
       
-      // Optional: Send email notification about new visitor
+      console.log("Visitor information stored with ID:", docRef.id);
+      
+      // Update visit count in localStorage
+      const currentCount = parseInt(localStorage.getItem("visitCount") || "0");
+      localStorage.setItem("visitCount", (currentCount + 1).toString());
+      
+      // Setup tracking for page activity
+      setupActivityTracking(visitId || deviceInfo.visitId);
+      
+      // Optional: Send email notification about visitor
       try {
-        await emailjs.send("service_vjg01x9", "template_venfmmq", {
-          user_name: "System",
-          message: `New visitor: ${userName} using ${deviceInfo.platform} (${deviceInfo.userAgent.substring(0, 100)}...) from ${deviceInfo.ipInfo?.country || 'unknown location'}`,
-          to_email: "abdallahelabd05@gmail.com"
-        }, "iqh5uRT5wWx4PA9DC");
+        // Only send emails for first-time visitors or once per day for returning visitors
+        const lastEmailSent = localStorage.getItem("lastEmailSent");
+        const shouldSendEmail = !lastEmailSent || 
+                               (new Date().getTime() - new Date(lastEmailSent).getTime() > 24 * 60 * 60 * 1000);
+        
+        if (shouldSendEmail) {
+          await emailjs.send("service_vjg01x9", "template_venfmmq", {
+            user_name: "System",
+            message: `Visitor: ${userName} using ${deviceInfo.platform} (${deviceInfo.userAgent.substring(0, 100)}...) from ${deviceInfo.ipInfo?.country || 'unknown location'} - Visit #${currentCount + 1}`,
+            to_email: "abdallahelabd05@gmail.com"
+          }, "iqh5uRT5wWx4PA9DC");
+          
+          localStorage.setItem("lastEmailSent", new Date().toISOString());
+        }
       } catch (error) {
         console.error("❌ Email notification failed:", error);
       }
@@ -313,20 +342,160 @@ export default function BioSite() {
     }
   };
   
+  // Setup function for tracking user activity
+  const setupActivityTracking = (visitId) => {
+    if (!visitId) return;
+    
+    // Track commands
+    const trackActivity = (activityType, activityData = {}) => {
+      try {
+        const activityCollection = collection(db, "visitor_activity");
+        addDoc(activityCollection, {
+          visitId,
+          userName,
+          activityType,
+          ...activityData,
+          timestamp: serverTimestamp()
+        });
+      } catch (error) {
+        console.error("Error tracking activity:", error);
+      }
+    };
+    
+    // Store the trackActivity function on window for global access
+    window.trackActivity = trackActivity;
+    
+    // Track user activity such as scrolling, mouse movement, etc.
+    let lastScrollTrack = 0;
+    let lastMouseTrack = 0;
+    let lastTouchTrack = 0;
+    
+    // Track scrolling (but not too frequently)
+    const handleScroll = () => {
+      const now = Date.now();
+      if (now - lastScrollTrack > 3000) { // Track every 3 seconds of scrolling at most
+        lastScrollTrack = now;
+        trackActivity("scroll", {
+          scrollX: window.scrollX,
+          scrollY: window.scrollY,
+          scrollHeight: document.documentElement.scrollHeight,
+          scrollPercentage: (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100).toFixed(2)
+        });
+      }
+    };
+    
+    // Track mouse movement (but not too frequently)
+    const handleMouseMove = (e) => {
+      const now = Date.now();
+      if (now - lastMouseTrack > 10000) { // Track every 10 seconds at most
+        lastMouseTrack = now;
+        trackActivity("mouse_activity");
+      }
+    };
+    
+    // Track touches on mobile devices
+    const handleTouch = () => {
+      const now = Date.now();
+      if (now - lastTouchTrack > 5000) { // Track every 5 seconds at most
+        lastTouchTrack = now;
+        trackActivity("touch_activity");
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchstart', handleTouch);
+    
+    // Return cleanup function
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchstart', handleTouch);
+      delete window.trackActivity;
+    };
+  };
+  
   // Run visitor information collection on component mount
   useEffect(() => {
-    // Check if this is a first-time visit using localStorage
-    const hasVisited = localStorage.getItem("hasVisited");
-    if (!hasVisited) {
-      // Set flag to prevent multiple collections for the same user
-      localStorage.setItem("hasVisited", "true");
-      
-      // Collect visitor info with a slight delay to ensure component is fully mounted
-      setTimeout(() => {
-        collectVisitorInfo();
-      }, 1000);
-    }
-  }, []);
+    // Create a unique visit ID for this session
+    const visitId = new Date().getTime() + "_" + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem("currentVisitId", visitId);
+    
+    // Track every visit, but with a slight delay to ensure component is fully mounted
+    setTimeout(() => {
+      collectVisitorInfo(visitId);
+    }, 1000);
+    
+    // Record session start time
+    localStorage.setItem("sessionStartTime", new Date().toISOString());
+    
+    // Create a heartbeat interval to track active sessions
+    const heartbeatInterval = setInterval(() => {
+      try {
+        const visitorCollection = collection(db, "visitors");
+        addDoc(visitorCollection, {
+          type: "heartbeat",
+          visitId: visitId,
+          userName: userName,
+          pageActive: !document.hidden,
+          timestamp: serverTimestamp()
+        });
+      } catch (error) {
+        console.error("Error sending heartbeat:", error);
+      }
+    }, 60000); // Send heartbeat every minute
+    
+    // Track when the user leaves the site
+    const handleBeforeUnload = () => {
+      // Calculate session duration
+      const startTime = localStorage.getItem("sessionStartTime");
+      if (startTime) {
+        const duration = new Date().getTime() - new Date(startTime).getTime();
+        const durationInMinutes = (duration / 60000).toFixed(2);
+        
+        // Add session duration to Firestore (this is async but might not complete before page unload)
+        try {
+          const visitorCollection = collection(db, "visitors");
+          addDoc(visitorCollection, {
+            type: "session_end",
+            visitId: visitId,
+            userName: userName,
+            sessionDuration: durationInMinutes,
+            timestamp: serverTimestamp()
+          });
+        } catch (error) {
+          console.error("Error recording session end:", error);
+        }
+      }
+    };
+    
+    // Track when page becomes visible/hidden
+    const handleVisibilityChange = () => {
+      try {
+        const visitorCollection = collection(db, "visitors");
+        addDoc(visitorCollection, {
+          type: "visibility_change",
+          visitId: visitId,
+          userName: userName,
+          isHidden: document.hidden,
+          timestamp: serverTimestamp()
+        });
+      } catch (error) {
+        console.error("Error tracking visibility:", error);
+      }
+    };
+    
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Cleanup function to remove event listeners and intervals
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(heartbeatInterval);
+    };
+  }, [userName]);
 
   useEffect(() => {
     const q = query(chatCollection, orderBy("timestamp"));
@@ -652,10 +821,40 @@ export default function BioSite() {
     }
   };
 
+  // Add an admin command to view analytics
+  const showAnalytics = () => {
+    if (!isAdmin) {
+      setStaticOutput((prev) => [...prev, "❌ Admin access required to view analytics."]);
+      return;
+    }
+    
+    setStaticOutput((prev) => [...prev, 
+      "📊 Analytics Dashboard", 
+      "Visit data is being collected and stored in Firebase.",
+      "Access your Firebase console to view complete visitor information:",
+      "- Collection: visitors (main visit data)",
+      "- Collection: visitor_activity (detailed user interactions)",
+      "",
+      "Analytics include:",
+      "• Complete visitor device information",
+      "• Session duration and activity",
+      "• Commands executed",
+      "• Page visibility and user engagement",
+      "• Geographic location data",
+      "",
+      "To export data, use the Firebase console or create a custom export function."
+    ]);
+  };
+
   // Direct command execution function for pinned commands
   const executeCommand = (cmd) => {
     // Add command to output first
     setStaticOutput((prev) => [...prev, `$ ${cmd}`]);
+    
+    // Track command execution
+    if (window.trackActivity) {
+      window.trackActivity("command_executed", { command: cmd });
+    }
     
     let result = [];
     switch (cmd) {
@@ -676,6 +875,9 @@ export default function BioSite() {
         setIsAdmin(false);
         localStorage.removeItem("isAdmin");
         setStaticOutput((prev) => [...prev, "🚩 Logged out of admin mode."]);
+        return;
+      case "analytics":
+        showAnalytics();
         return;
       case "chat":
         setChatMode(true);
@@ -701,6 +903,32 @@ export default function BioSite() {
           "• Facebook • Twitter • Google Ads"
         ];
         break;
+      case "cv":
+        result = [
+          "📄 CURRICULUM VITAE 📄",
+          "",
+          "👤 PERSONAL INFORMATION",
+          "• Name: Abdallah Elabd",
+          "• Email: abdallahelabd05@gmail.com",
+          "• Twitter: @abdallahelabd05",
+          "",
+          "🎓 EDUCATION",
+          "• Computer Engineering Student",
+          "• Self-taught Developer since 2018",
+          "",
+          "💼 PROFESSIONAL EXPERIENCE",
+          "• Freelance Developer (2020 - Present)",
+          "• Startup Founder - Multiple ventures",
+          "• Blockchain Developer",
+          "",
+          "🏆 ACHIEVEMENTS",
+          "• Successfully launched 5+ startups",
+          "• Developed and deployed multiple web applications",
+          "• Created custom blockchain solutions",
+          "",
+          "Type 'skills' to see technical skills or 'experience' for more details."
+        ];
+        break;
       default:
         result = [`Command not found: ${cmd}`];
     }
@@ -711,6 +939,8 @@ export default function BioSite() {
         setQueuedLines((prev) => [...prev, line]);
       }, index * 400);
     });
+    
+    setCommand("");
   };
 
   const handleCommand = async () => {
@@ -718,6 +948,11 @@ export default function BioSite() {
     if (!trimmed && !selectedImage) return;
 
     const [baseCmd, ...args] = trimmed.split(" ");
+    
+    // Track command input
+    if (window.trackActivity) {
+      window.trackActivity("command_input", { command: trimmed });
+    }
 
     // Allow users to exit chat mode with "exit" or "quit" or "/exit" or "/quit"
     if (chatMode && ["exit", "quit", "/exit", "/quit"].includes(trimmed.toLowerCase())) {
@@ -836,6 +1071,9 @@ export default function BioSite() {
         localStorage.removeItem("isAdmin");
         setStaticOutput((prev) => [...prev, "🚩 Logged out of admin mode."]);
         break;
+      case "analytics":
+        showAnalytics();
+        break;
       case "chat":
         setChatMode(true);
         setStaticOutput((prev) => [...prev, "Chat mode activated! Type your message."]);
@@ -860,10 +1098,36 @@ export default function BioSite() {
           "• Facebook • Twitter • Google Ads"
         ];
         break;
+      case "cv":
+        result = [
+          "📄 CURRICULUM VITAE 📄",
+          "",
+          "👤 PERSONAL INFORMATION",
+          "• Name: Abdallah Elabd",
+          "• Email: abdallahelabd05@gmail.com",
+          "• Twitter: @abdallahelabd05",
+          "",
+          "🎓 EDUCATION",
+          "• Computer Engineering Student",
+          "• Self-taught Developer since 2018",
+          "",
+          "💼 PROFESSIONAL EXPERIENCE",
+          "• Freelance Developer (2020 - Present)",
+          "• Startup Founder - Multiple ventures",
+          "• Blockchain Developer",
+          "",
+          "🏆 ACHIEVEMENTS",
+          "• Successfully launched 5+ startups",
+          "• Developed and deployed multiple web applications",
+          "• Created custom blockchain solutions",
+          "",
+          "Type 'skills' to see technical skills or 'experience' for more details."
+        ];
+        break;
       default:
         result = [`Command not found: ${trimmed}`];
     }
-
+    
     // Queue result lines for animation
     result.forEach((line, index) => {
       setTimeout(() => {
@@ -1254,7 +1518,7 @@ export default function BioSite() {
                     <ul className="space-y-2 text-sm">
                       {messages.map((msg, index) => (
                         <li
-                          key={index}
+                         key={index}
                           className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
                         >
                           <p className="text-white">
