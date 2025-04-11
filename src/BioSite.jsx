@@ -1235,21 +1235,90 @@ export default function BioSite() {
                   }, {})
                 ).map(([participant, messages]) => (
                   <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
-                    <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-bold text-green-400 text-lg">👥 Chat with {participant}</h4>
+                      
+                      <button
+                        className="text-xs text-yellow-400 hover:text-yellow-300 px-2 py-1 bg-black/50 rounded border border-yellow-600"
+                        onClick={() => {
+                          const newName = window.prompt(`Change username for ${participant}:`, participant);
+                          if (newName && newName.trim() && newName !== participant) {
+                            // First confirm the change
+                            const confirmChange = window.confirm(`Change username from "${participant}" to "${newName}"?`);
+                            if (!confirmChange) return;
+                            
+                            // Update all messages from this user
+                            const userMessages = messages.filter(m => m.userName === participant);
+                            userMessages.forEach(async (msg) => {
+                              await updateDoc(doc(db, "chat", msg.id), {
+                                userName: newName
+                              });
+                            });
+                            
+                            // Update all messages to this user
+                            const messagesToUser = messages.filter(m => m.recipient === participant);
+                            messagesToUser.forEach(async (msg) => {
+                              await updateDoc(doc(db, "chat", msg.id), {
+                                recipient: newName
+                              });
+                            });
+                            
+                            // Add system message about the change
+                            addDoc(chatCollection, {
+                              user: `Username changed from "${participant}" to "${newName}" by admin`,
+                              userName: "System",
+                              timestamp: serverTimestamp()
+                            });
+                          }
+                        }}
+                      >
+                        ✏️ Rename User
+                      </button>
+                    </div>
 
-                    <button
-                      className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
-                      onClick={async () => {
-                        const confirmClear = window.confirm(`Clear conversation with ${participant}?`);
-                        if (!confirmClear) return;
-                        const idsToDelete = messages.map((m) => m.id);
-                        for (const id of idsToDelete) {
-                          await deleteDoc(doc(db, "chat", id));
-                        }
-                      }}
-                    >
-                      🗑 Clear conversation
-                    </button>
+                    <div className="flex justify-between mb-2">
+                      <button
+                        className="text-xs text-red-400 hover:text-red-600 underline"
+                        onClick={async () => {
+                          const confirmClear = window.confirm(`Clear conversation with ${participant}?`);
+                          if (!confirmClear) return;
+                          const idsToDelete = messages.map((m) => m.id);
+                          for (const id of idsToDelete) {
+                            await deleteDoc(doc(db, "chat", id));
+                          }
+                        }}
+                      >
+                        🗑 Clear conversation
+                      </button>
+                      
+                      <button
+                        className="text-xs text-red-400 hover:text-red-600 underline"
+                        onClick={async () => {
+                          const confirmBan = window.confirm(`Ban user "${participant}"? This will delete all their messages.`);
+                          if (!confirmBan) return;
+                          
+                          // Delete all messages from this user
+                          const userMessages = messages.filter(m => m.userName === participant);
+                          for (const msg of userMessages) {
+                            await deleteDoc(doc(db, "chat", msg.id));
+                          }
+                          
+                          // Add a banned note to localStorage (basic implementation)
+                          const bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || "[]");
+                          bannedUsers.push(participant);
+                          localStorage.setItem("bannedUsers", JSON.stringify(bannedUsers));
+                          
+                          // Add system message about the ban
+                          await addDoc(chatCollection, {
+                            user: `User "${participant}" has been banned by admin`,
+                            userName: "System",
+                            timestamp: serverTimestamp()
+                          });
+                        }}
+                      >
+                        🚫 Ban user
+                      </button>
+                    </div>
 
                     <ul className="space-y-2 text-sm">
                       {messages.map((msg, index) => (
