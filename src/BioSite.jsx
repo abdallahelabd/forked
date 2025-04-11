@@ -1226,14 +1226,30 @@ export default function BioSite() {
               <p className="mb-3 text-sm">Type <code>logout</code> to exit admin mode.</p>
 
               <div className="flex-1 overflow-y-auto space-y-4 mt-3">
-                {Object.entries(
-                  chatLog.reduce((acc, msg) => {
-                    const otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
-                    if (!acc[otherUser]) acc[otherUser] = [];
-                    acc[otherUser].push(msg);
+                {/* Add a mapping to track renamed users */}
+                {(() => {
+                  // Get renamed users map from localStorage 
+                  const renamedUsers = JSON.parse(localStorage.getItem("renamedUsers") || "{}");
+                  
+                  // Group messages by participant, considering renamed users
+                  const messagesByParticipant = chatLog.reduce((acc, msg) => {
+                    // Determine the participant name
+                    let otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
+                    
+                    // If this username was renamed, use the new name instead
+                    const currentName = renamedUsers[otherUser] || otherUser;
+                    
+                    // Initialize the array if it doesn't exist
+                    if (!acc[currentName]) acc[currentName] = [];
+                    
+                    // Add the message to the array
+                    acc[currentName].push(msg);
+                    
                     return acc;
-                  }, {})
-                ).map(([participant, messages]) => (
+                  }, {});
+                  
+                  // Return the JSX based on the grouped messages
+                  return Object.entries(messagesByParticipant).map(([participant, messages]) => (
                   <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-bold text-green-400 text-lg">👥 Chat with {participant}</h4>
@@ -1262,6 +1278,11 @@ export default function BioSite() {
                                 recipient: newName
                               });
                             });
+                            
+                            // Store renamed user in localStorage for reference
+                            const renamedUsers = JSON.parse(localStorage.getItem("renamedUsers") || "{}");
+                            renamedUsers[participant] = newName;
+                            localStorage.setItem("renamedUsers", JSON.stringify(renamedUsers));
                             
                             // Add system message about the change
                             addDoc(chatCollection, {
