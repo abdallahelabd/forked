@@ -121,7 +121,7 @@ const FirestoreImage = ({ imageId, className }) => {
 
 function PinnedCommands({ setCommand, inputRef, executeCommand }) {
   // Add "cv" to the pinned commands
-  const pinnedCommands = ["Hello", "Experience", "Skills", "CV", "Chat"];
+  const pinnedCommands = ["hello", "experience", "skills", "CV", "chat"];
   
   const handlePinnedCommand = (cmd) => {
     // Execute the command directly instead of going through the input field
@@ -912,7 +912,7 @@ export default function BioSite() {
           "• Facebook • Twitter • Google Ads"
         ];
         break;
-      case "cv":
+      case "CV":
         // Use direct state setting for CV since it's a longer output
         setStaticOutput((prev) => [
           ...prev,
