@@ -196,6 +196,8 @@ export default function BioSite() {
   const inputRef = useRef(null);
   const outputRef = useRef(null);
   const fileInputRef = useRef(null);
+  // Add a new ref to track if animation is in progress
+  const isAnimating = useRef(false);
 
   // Function to collect visitor information
   const collectVisitorInfo = async (visitId) => {
@@ -538,8 +540,10 @@ export default function BioSite() {
     return () => clearTimeout(scrollToBottom);
   }, [staticOutput, animatedOutput, chatLog]);
 
+  // Fixed animation handling for CV content display
   useEffect(() => {
-    if (queuedLines.length > 0 && animatedOutput.length === 0) {
+    if (queuedLines.length > 0 && animatedOutput.length === 0 && !isAnimating.current) {
+      isAnimating.current = true;
       const [next, ...rest] = queuedLines;
       setAnimatedOutput([next]);
       setQueuedLines(rest);
@@ -856,6 +860,11 @@ export default function BioSite() {
       window.trackActivity("command_executed", { command: cmd });
     }
     
+    // Clear any existing queue and animation state to prevent interference
+    setQueuedLines([]);
+    setAnimatedOutput([]);
+    isAnimating.current = false;
+    
     let result = [];
     switch (cmd) {
       case "clear":
@@ -904,7 +913,9 @@ export default function BioSite() {
         ];
         break;
       case "cv":
-        result = [
+        // Use direct state setting for CV since it's a longer output
+        setStaticOutput((prev) => [
+          ...prev,
           "📄 CURRICULUM VITAE 📄",
           "",
           "👤 PERSONAL INFORMATION",
@@ -927,18 +938,24 @@ export default function BioSite() {
           "• Created custom blockchain solutions",
           "",
           "Type 'skills' to see technical skills or 'experience' for more details."
-        ];
-        break;
+        ]);
+        return;
       default:
         result = [`Command not found: ${cmd}`];
     }
     
-    // Queue result lines for animation
-    result.forEach((line, index) => {
-      setTimeout(() => {
-        setQueuedLines((prev) => [...prev, line]);
-      }, index * 400);
-    });
+    // Only use animation for shorter outputs
+    if (result.length <= 5) {
+      // Queue result lines for animation
+      result.forEach((line, index) => {
+        setTimeout(() => {
+          setQueuedLines((prev) => [...prev, line]);
+        }, index * 300);
+      });
+    } else {
+      // For longer outputs, add them directly to avoid animation issues
+      setStaticOutput((prev) => [...prev, ...result]);
+    }
     
     setCommand("");
   };
@@ -1047,95 +1064,8 @@ export default function BioSite() {
       return;
     }
 
-    // Handle non-chat mode commands
-    setStaticOutput((prev) => [...prev, `$ ${trimmed}`]);
-    
-    // Process normal terminal commands
-    let result = [];
-    switch (baseCmd) {
-      case "clear":
-        setStaticOutput((prev) => [...prev, "🪩 This command no longer clears global chat."]);
-        break;
-      case "admin":
-        if (args[0] === "lalaelabd2005") {
-          setIsAdmin(true);
-          localStorage.setItem("isAdmin", "true");
-          setAdminPanelOpen(true);
-          setStaticOutput((prev) => [...prev, `$ ${command}`]);
-        } else {
-          setStaticOutput((prev) => [...prev, `$ ${command}`, "❌ Incorrect passcode."]);
-        }
-        break;
-      case "logout":
-        setIsAdmin(false);
-        localStorage.removeItem("isAdmin");
-        setStaticOutput((prev) => [...prev, "🚩 Logged out of admin mode."]);
-        break;
-      case "analytics":
-        showAnalytics();
-        break;
-      case "chat":
-        setChatMode(true);
-        setStaticOutput((prev) => [...prev, "Chat mode activated! Type your message."]);
-        break;
-      case "hello":
-        result = ["Hello, Welcome to my humble site! 👋"];
-        break;
-      case "experience":
-        result = [
-          "→ Worked as a freelancing programmer since 2020.",
-          "→ Launched more than 5 startups in 3 different fields.",
-          "→ Gained many experiences in fields like designing, blockchain and marketing."
-        ];
-        break;
-      case "skills":
-        result = [
-          "🧠 Programming:",
-          "• Python • C++ • HTML • JS • CSS • Solidity",
-          "🎨 Designing:",
-          "• Photoshop • Illustrator • Figma • Adobe Premiere",
-          "📣 Marketing:",
-          "• Facebook • Twitter • Google Ads"
-        ];
-        break;
-      case "cv":
-        result = [
-          "📄 CURRICULUM VITAE 📄",
-          "",
-          "👤 PERSONAL INFORMATION",
-          "• Name: Abdallah Elabd",
-          "• Email: abdallahelabd05@gmail.com",
-          "• Twitter: @abdallahelabd05",
-          "",
-          "🎓 EDUCATION",
-          "• Computer Engineering Student",
-          "• Self-taught Developer since 2018",
-          "",
-          "💼 PROFESSIONAL EXPERIENCE",
-          "• Freelance Developer (2020 - Present)",
-          "• Startup Founder - Multiple ventures",
-          "• Blockchain Developer",
-          "",
-          "🏆 ACHIEVEMENTS",
-          "• Successfully launched 5+ startups",
-          "• Developed and deployed multiple web applications",
-          "• Created custom blockchain solutions",
-          "",
-          "Type 'skills' to see technical skills or 'experience' for more details."
-        ];
-        break;
-      default:
-        result = [`Command not found: ${trimmed}`];
-    }
-    
-    // Queue result lines for animation
-    result.forEach((line, index) => {
-      setTimeout(() => {
-        setQueuedLines((prev) => [...prev, line]);
-      }, index * 400);
-    });
-    
-    setCommand("");
+    // Handle non-chat mode commands (direct call to executeCommand for consistent handling)
+    executeCommand(trimmed);
   };
 
   return (
@@ -1173,6 +1103,7 @@ export default function BioSite() {
                       onComplete={(line) => {
                         setStaticOutput((prev) => [...prev, line]);
                         setAnimatedOutput([]);
+                        isAnimating.current = false;
                       }}
                     />
                   ))}
@@ -1250,7 +1181,6 @@ export default function BioSite() {
                             <span className="text-xs text-gray-400 ml-2">✓ Sent</span>
                           )}
                         </p>
-                        
                         {/* Display attached image if any */}
                         {log.imageUrl && (
                           <div className={`mt-2 ${log.userName === "Abdallah" ? "ml-auto" : "mr-auto"}`}>
@@ -1518,7 +1448,7 @@ export default function BioSite() {
                     <ul className="space-y-2 text-sm">
                       {messages.map((msg, index) => (
                         <li
-                         key={index}
+                          key={index}
                           className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
                         >
                           <p className="text-white">
