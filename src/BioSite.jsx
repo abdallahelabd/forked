@@ -196,121 +196,337 @@ export default function BioSite() {
   const outputRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Function to collect visitor information
-  const collectVisitorInfo = async () => {
+  // Function to render the admin chat list
+  const renderAdminChatList = () => {
+    // Get renamed users map from localStorage 
+    let renamedUsers = {};
     try {
-      console.log("Collecting visitor information...");
-      
-      // Get device information
-      const deviceInfo = {
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        vendor: navigator.vendor,
-        language: navigator.language,
-        screenWidth: window.screen.width,
-        screenHeight: window.screen.height,
-        colorDepth: window.screen.colorDepth,
-        pixelRatio: window.devicePixelRatio,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        cookiesEnabled: navigator.cookieEnabled,
-        doNotTrack: navigator.doNotTrack,
-        onlineStatus: navigator.onLine,
-        deviceMemory: navigator.deviceMemory || 'Not available',
-        cpuCores: navigator.hardwareConcurrency || 'Not available',
-        connectionType: navigator.connection ? navigator.connection.effectiveType : 'Not available',
-        batteryLevel: null, // Will be updated if available
-        referrer: document.referrer || 'Direct',
-        timestamp: new Date().toISOString(),
-        visitorId: userName
-      };
-      
-      // Try to get battery information
-      if (navigator.getBattery) {
-        try {
-          const battery = await navigator.getBattery();
-          deviceInfo.batteryLevel = battery.level;
-          deviceInfo.batteryCharging = battery.charging;
-        } catch (err) {
-          console.log("Battery info not available:", err);
-        }
-      }
-      
-      // Try to get IP information from a third-party service
-      try {
-        const ipResponse = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipResponse.json();
-        deviceInfo.ipAddress = ipData.ip;
-        
-        // Optionally get more IP info
-        const geoResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
-        const geoData = await geoResponse.json();
-        deviceInfo.ipInfo = {
-          city: geoData.city,
-          region: geoData.region,
-          country: geoData.country_name,
-          postal: geoData.postal,
-          isp: geoData.org
-        };
-      } catch (err) {
-        console.log("IP info not available:", err);
-        deviceInfo.ipAddress = "Not available";
-      }
-      
-      // Try to get browser features and capabilities
-      try {
-        const features = {
-          localStorage: typeof localStorage !== 'undefined',
-          sessionStorage: typeof sessionStorage !== 'undefined',
-          webGL: (function() {
-            try {
-              const canvas = document.createElement('canvas');
-              return !!window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
-            } catch(e) {
-              return false;
-            }
-          })(),
-          canvas: (function() {
-            try {
-              const canvas = document.createElement('canvas');
-              return !!(canvas.getContext && canvas.getContext('2d'));
-            } catch(e) {
-              return false;
-            }
-          })(),
-          audio: !!window.AudioContext || !!window.webkitAudioContext,
-          video: !!document.createElement('video').canPlayType,
-          touch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
-          notifications: 'Notification' in window
-        };
-        deviceInfo.features = features;
-      } catch (err) {
-        console.log("Error collecting browser features:", err);
-      }
-      
-      console.log("Collected visitor information:", deviceInfo);
-      
-      // Store in Firestore
-      const visitorCollection = collection(db, "visitors");
-      await addDoc(visitorCollection, {
-        ...deviceInfo,
-        timestamp: serverTimestamp()
-      });
-      
-      // Optional: Send email notification about new visitor
-      try {
-        await emailjs.send("service_vjg01x9", "template_venfmmq", {
-          user_name: "System",
-          message: `New visitor: ${userName} using ${deviceInfo.platform} (${deviceInfo.userAgent.substring(0, 100)}...) from ${deviceInfo.ipInfo?.country || 'unknown location'}`,
-          to_email: "abdallahelabd05@gmail.com"
-        }, "iqh5uRT5wWx4PA9DC");
-      } catch (error) {
-        console.error("❌ Email notification failed:", error);
-      }
-      
-      console.log("Visitor information stored successfully");
-    } catch (error) {
-      console.error("Failed to collect or store visitor information:", error);
+      renamedUsers = JSON.parse(localStorage.getItem("renamedUsers") || "{}");
+    } catch (e) {
+      console.error("Error parsing renamed users:", e);
     }
+    
+    // Group messages by participant, considering renamed users
+    const messagesByParticipant = {};
+    
+    chatLog.forEach(msg => {
+      // Determine the participant name
+      let otherUser = msg.userName === "Abdallah" ? msg.recipient : msg.userName;
+      
+      // If this username was renamed, use the new name instead
+      const currentName = renamedUsers[otherUser] || otherUser;
+      
+      // Skip if no participant name
+      if (!currentName) return;
+      
+      // Initialize the array if it doesn't exist
+      if (!messagesByParticipant[currentName]) {
+        messagesByParticipant[currentName] = [];
+      }
+      
+      // Add the message to the array
+      messagesByParticipant[currentName].push(msg);
+    });
+    
+    // Return the chat list items
+    return Object.keys(messagesByParticipant).map(participant => {
+      const messages = messagesByParticipant[participant];
+      
+      // Skip rendering if participant is empty or undefined
+      if (!participant || participant === "undefined") return null;
+      
+      return (
+        <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="font-bold text-green-400 text-lg">👥 Chat with {participant}</h4>
+            
+            <button
+              className="text-xs text-yellow-400 hover:text-yellow-300 px-2 py-1 bg-black/50 rounded border border-yellow-600"
+              onClick={() => {
+                const newName = window.prompt(`Change username for ${participant}:`, participant);
+                if (newName && newName.trim() && newName !== participant) {
+                  // First confirm the change
+                  const confirmChange = window.confirm(`Change username from "${participant}" to "${newName}"?`);
+                  if (!confirmChange) return;
+                  
+                  // Update all messages from this user
+                  const userMessages = messages.filter(m => m.userName === participant);
+                  userMessages.forEach(async (msg) => {
+                    await updateDoc(doc(db, "chat", msg.id), {
+                      userName: newName
+                    });
+                  });
+                  
+                  // Update all messages to this user
+                  const messagesToUser = messages.filter(m => m.recipient === participant);
+                  messagesToUser.forEach(async (msg) => {
+                    await updateDoc(doc(db, "chat", msg.id), {
+                      recipient: newName
+                    });
+                  });
+                  
+                  // Store renamed user in localStorage for reference
+                  const renamedUsers = JSON.parse(localStorage.getItem("renamedUsers") || "{}");
+                  renamedUsers[participant] = newName;
+                  localStorage.setItem("renamedUsers", JSON.stringify(renamedUsers));
+                  
+                  // Add system message about the change
+                  addDoc(chatCollection, {
+                    user: `Username changed from "${participant}" to "${newName}" by admin`,
+                    userName: "System",
+                    timestamp: serverTimestamp()
+                  });
+                }
+              }}
+            >
+              ✏️ Rename User
+            </button>
+          </div>
+
+          <div className="flex justify-between mb-2">
+            <button
+              className="text-xs text-red-400 hover:text-red-600 underline"
+              onClick={async () => {
+                const confirmClear = window.confirm(`Clear conversation with ${participant}?`);
+                if (!confirmClear) return;
+                const idsToDelete = messages.map((m) => m.id);
+                for (const id of idsToDelete) {
+                  await deleteDoc(doc(db, "chat", id));
+                }
+              }}
+            >
+              🗑 Clear conversation
+            </button>
+            
+            <button
+              className="text-xs text-red-400 hover:text-red-600 underline"
+              onClick={async () => {
+                const confirmBan = window.confirm(`Ban user "${participant}"? This will delete all their messages.`);
+                if (!confirmBan) return;
+                
+                // Delete all messages from this user
+                const userMessages = messages.filter(m => m.userName === participant);
+                for (const msg of userMessages) {
+                  await deleteDoc(doc(db, "chat", msg.id));
+                }
+                
+                // Add a banned note to localStorage (basic implementation)
+                const bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || "[]");
+                bannedUsers.push(participant);
+                localStorage.setItem("bannedUsers", JSON.stringify(bannedUsers));
+                
+                // Add system message about the ban
+                await addDoc(chatCollection, {
+                  user: `User "${participant}" has been banned by admin`,
+                  userName: "System",
+                  timestamp: serverTimestamp()
+                });
+              }}
+            >
+              🚫 Ban user
+            </button>
+          </div>
+
+          <ul className="space-y-2 text-sm">
+            {messages.map((msg, index) => (
+              <li
+                key={index}
+                className={`rounded-xl p-3 shadow-inner max-w-[80%] ${msg.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}
+              >
+                <p className="text-white">
+                  <span className={msg.userName === "Abdallah" ? "text-yellow-400 font-bold" : "text-green-100"}>
+                    {msg.userName === "Abdallah" ? "🫅 Abdallah: " : ""}
+                  </span>
+                  {msg.user} 
+                  {msg.reaction && 
+                    <span className='ml-2 bg-green-700 px-2 py-1 rounded-full'>{msg.reaction}</span>
+                  }
+                </p>
+                
+                {/* Display image in admin panel */}
+                {msg.imageUrl && (
+                  <div className="mt-2">
+                    {msg.isFirestoreImage ? (
+                      // For images stored in Firestore
+                      <FirestoreImage 
+                        imageId={msg.imageUrl}
+                        className="rounded-lg border border-green-600 max-w-full max-h-32 object-contain cursor-pointer hover:opacity-90 transition-opacity" 
+                      />
+                    ) : (
+                      // For images stored in Firebase Storage
+                      <img 
+                        src={msg.imageUrl} 
+                        alt="Attached" 
+                        className="rounded-lg border border-green-600 max-w-full max-h-32 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(msg.imageUrl, '_blank')}
+                      />
+                    )}
+                  </div>
+                )}
+                
+                <div className="flex gap-2 mt-1">
+                  {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                    <motion.button
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                      key={emoji}
+                      onClick={() => handleReaction(msg, emoji, setChatLog)}
+                      className={`text-sm hover:bg-green-700 px-2 py-1 rounded-full transition-all ${msg.reaction === emoji ? 'bg-green-700 shadow-md' : 'bg-green-900/30'}`}
+                      title={`React with ${emoji}`}
+                    >
+                      {emoji}
+                    </motion.button>
+                  ))}
+                </div>
+                {isAdmin && (
+                  <button
+                    className="text-xs text-red-400 mt-1 hover:text-red-600"
+                    onClick={async () => {
+                      const confirmDelete = window.confirm("Delete this message?");
+                      if (confirmDelete) {
+                        await deleteDoc(doc(db, 'chat', msg.id));
+                      }
+                    }}
+                  >
+                    🗑 Delete
+                  </button>
+                )}
+                <span className="block text-xs text-green-500 mt-1">{msg.timestamp?.toDate && new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
+                {msg.userName === "Abdallah" && (
+                  <span className="block text-[10px] text-green-400 mt-0.5">
+                    {msg.seenByUser ? `✓✓ Seen ${msg.seenTime ? 'at ' + msg.seenTime : ''}` : "✓ Sent"}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-3">
+            {/* Admin image upload section */}
+            <div className="flex items-center gap-2 mb-2">
+              <label className="flex-1 text-xs text-green-400">
+                <span className="bg-green-700 hover:bg-green-600 px-3 py-1 rounded-full cursor-pointer inline-block mb-1">
+                  📸 Send image
+                </span>
+                <input 
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleAdminImageUpload(e, participant)}
+                />
+              </label>
+            </div>
+
+            <form
+              className="flex gap-2"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const input = e.target.elements[`reply-${participant}`];
+                const message = input.value.trim();
+                if (!message) return;
+                const time = new Date().toLocaleTimeString();
+                await addDoc(chatCollection, {
+                  user: message,
+                  recipient: participant,
+                  userName: "Abdallah",
+                  time,
+                  timestamp: serverTimestamp(),
+                  seenByUser: false
+                });
+                input.value = "";
+              }}
+            >
+              <input
+                type="text"
+                name={`reply-${participant}`}
+                placeholder={`Reply to ${participant}...`}
+                className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
+              />
+              <button
+                type="submit"
+                className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
+              >
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }).filter(Boolean); // Filter out any null values
+  };className="text-xs text-red-400 mt-1 hover:text-red-600"
+                    onClick={async () => {
+                      const confirmDelete = window.confirm("Delete this message?");
+                      if (confirmDelete) {
+                        await deleteDoc(doc(db, 'chat', msg.id));
+                      }
+                    }}
+                  >
+                    🗑 Delete
+                  </button>
+                )}
+                <span className="block text-xs text-green-500 mt-1">{msg.timestamp?.toDate && new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
+                {msg.userName === "Abdallah" && (
+                  <span className="block text-[10px] text-green-400 mt-0.5">
+                    {msg.seenByUser ? `✓✓ Seen ${msg.seenTime ? 'at ' + msg.seenTime : ''}` : "✓ Sent"}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-3">
+            {/* Admin image upload section */}
+            <div className="flex items-center gap-2 mb-2">
+              <label className="flex-1 text-xs text-green-400">
+                <span className="bg-green-700 hover:bg-green-600 px-3 py-1 rounded-full cursor-pointer inline-block mb-1">
+                  📸 Send image
+                </span>
+                <input 
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleAdminImageUpload(e, participant)}
+                />
+              </label>
+            </div>
+
+            <form
+              className="flex gap-2"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const input = e.target.elements[`reply-${participant}`];
+                const message = input.value.trim();
+                if (!message) return;
+                const time = new Date().toLocaleTimeString();
+                await addDoc(chatCollection, {
+                  user: message,
+                  recipient: participant,
+                  userName: "Abdallah",
+                  time,
+                  timestamp: serverTimestamp(),
+                  seenByUser: false
+                });
+                input.value = "";
+              }}
+            >
+              <input
+                type="text"
+                name={`reply-${participant}`}
+                placeholder={`Reply to ${participant}...`}
+                className="flex-1 bg-black border border-green-500 rounded px-3 py-1 text-green-200 placeholder-green-500"
+              />
+              <button
+                type="submit"
+                className="bg-green-700 px-4 py-1 rounded text-white hover:bg-green-600"
+              >
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }).filter(Boolean);
   };
   
   // Run visitor information collection on component mount
