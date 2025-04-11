@@ -912,12 +912,13 @@ export default function BioSite() {
           "• Facebook • Twitter • Google Ads"
         ];
         break;
-      case "CV":
+     case "CV":
   setStaticOutput((prev) => [
     ...prev,
     "📄 CURRICULUM VITAE 📄",
     "",
-    '<iframe src="/CV.pdf" width="100%" height="500px" style="border:2px solid #22c55e; border-radius: 10px;"></iframe>',
+    `<iframe src="https://docs.google.com/gview?url=https://abdallah.bio/CV.pdf&embedded=true" width="100%" height="600px" style="border:2px solid #22c55e; border-radius: 10px;"></iframe>`,
+    "<small>If the CV doesn't load, <a href='https://abdallah.bio/CV.pdf' target='_blank' class='underline text-green-400'>click here to open it in a new tab</a>.</small>"
   ]);
   return;
 
