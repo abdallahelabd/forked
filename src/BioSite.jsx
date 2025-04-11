@@ -917,7 +917,7 @@ export default function BioSite() {
     ...prev,
     "📄 CURRICULUM VITAE 📄",
     "",
-    '<iframe src="CV.pdf" width="100%" height="500px" style="border:2px solid #22c55e; border-radius: 10px;"></iframe>',
+    '<iframe src="/CV.pdf" width="100%" height="500px" style="border:2px solid #22c55e; border-radius: 10px;"></iframe>',
   ]);
   return;
 
