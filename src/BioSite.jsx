@@ -836,8 +836,9 @@ export default function BioSite() {
       return;
     }
 
-    // Handle non-chat mode commands
+// Handle non-chat mode commands
     setStaticOutput((prev) => [...prev, `$ ${trimmed}`]);
+
     // Special handling for admin command
     if (baseCmd === "admin") {
       if (args[0] === "lalaelabd2005") {
