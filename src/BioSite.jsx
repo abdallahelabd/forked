@@ -121,7 +121,7 @@ const FirestoreImage = ({ imageId, className }) => {
 
 function PinnedCommands({ setCommand, inputRef, executeCommand }) {
   // Add "cv" to the pinned commands
-  const pinnedCommands = ["hello", "experience", "skills", "CV", "chat"];
+  const pinnedCommands = ["hello", "experience", "skills", "cv", "chat"];
   
   const handlePinnedCommand = (cmd) => {
     // Execute the command directly instead of going through the input field
@@ -199,41 +199,19 @@ export default function BioSite() {
   // Add a new ref to track if animation is in progress
   const isAnimating = useRef(false);
 
-  // Function to collect visitor information
+  // Simplified visitor tracking function
   const collectVisitorInfo = async (visitId) => {
     try {
       console.log("Collecting visitor information...");
       
-      // Get device information
+      // Get minimal device information
       const deviceInfo = {
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        vendor: navigator.vendor,
-        language: navigator.language,
-        screenWidth: window.screen.width,
-        screenHeight: window.screen.height,
-        colorDepth: window.screen.colorDepth,
-        pixelRatio: window.devicePixelRatio,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        cookiesEnabled: navigator.cookieEnabled,
-        doNotTrack: navigator.doNotTrack,
-        onlineStatus: navigator.onLine,
-        deviceMemory: navigator.deviceMemory || 'Not available',
-        cpuCores: navigator.hardwareConcurrency || 'Not available',
-        connectionType: navigator.connection ? navigator.connection.effectiveType : 'Not available',
+        device: navigator.platform || 'Unknown',
+        deviceName: navigator.userAgent.split('(')[1]?.split(';')[0] || 'Unknown',
         batteryLevel: null, // Will be updated if available
-        referrer: document.referrer || 'Direct',
         timestamp: new Date().toISOString(),
         visitorId: userName,
-        visitId: visitId || `${new Date().getTime()}_${Math.random().toString(36).substring(2, 10)}`,
-        previousVisits: localStorage.getItem("visitCount") || 0,
-        currentURL: window.location.href,
-        pagePath: window.location.pathname,
-        queryParams: window.location.search,
-        pageTitle: document.title,
-        deviceType: /Mobile|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight
+        visitId: visitId
       };
       
       // Try to get battery information
@@ -247,56 +225,25 @@ export default function BioSite() {
         }
       }
       
-      // Try to get IP information from a third-party service
+      // Try to get IP information and location
       try {
         const ipResponse = await fetch('https://api.ipify.org?format=json');
         const ipData = await ipResponse.json();
         deviceInfo.ipAddress = ipData.ip;
         
-        // Optionally get more IP info
+        // Get location information
         const geoResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
         const geoData = await geoResponse.json();
-        deviceInfo.ipInfo = {
+        deviceInfo.location = {
           city: geoData.city,
           region: geoData.region,
           country: geoData.country_name,
-          postal: geoData.postal,
-          isp: geoData.org
+          postal: geoData.postal
         };
       } catch (err) {
-        console.log("IP info not available:", err);
+        console.log("IP or location info not available:", err);
         deviceInfo.ipAddress = "Not available";
-      }
-      
-      // Try to get browser features and capabilities
-      try {
-        const features = {
-          localStorage: typeof localStorage !== 'undefined',
-          sessionStorage: typeof sessionStorage !== 'undefined',
-          webGL: (function() {
-            try {
-              const canvas = document.createElement('canvas');
-              return !!window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
-            } catch(e) {
-              return false;
-            }
-          })(),
-          canvas: (function() {
-            try {
-              const canvas = document.createElement('canvas');
-              return !!(canvas.getContext && canvas.getContext('2d'));
-            } catch(e) {
-              return false;
-            }
-          })(),
-          audio: !!window.AudioContext || !!window.webkitAudioContext,
-          video: !!document.createElement('video').canPlayType,
-          touch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
-          notifications: 'Notification' in window
-        };
-        deviceInfo.features = features;
-      } catch (err) {
-        console.log("Error collecting browser features:", err);
+        deviceInfo.location = "Not available";
       }
       
       console.log("Collected visitor information:", deviceInfo);
@@ -305,198 +252,35 @@ export default function BioSite() {
       const visitorCollection = collection(db, "visitors");
       const docRef = await addDoc(visitorCollection, {
         ...deviceInfo,
-        type: "page_visit",
         timestamp: serverTimestamp()
       });
       
       console.log("Visitor information stored with ID:", docRef.id);
       
-      // Update visit count in localStorage
-      const currentCount = parseInt(localStorage.getItem("visitCount") || "0");
-      localStorage.setItem("visitCount", (currentCount + 1).toString());
-      
-      // Setup tracking for page activity
-      setupActivityTracking(visitId || deviceInfo.visitId);
-      
-      // Optional: Send email notification about visitor
+      // Send email notification
       try {
-        // Only send emails for first-time visitors or once per day for returning visitors
-        const lastEmailSent = localStorage.getItem("lastEmailSent");
-        const shouldSendEmail = !lastEmailSent || 
-                               (new Date().getTime() - new Date(lastEmailSent).getTime() > 24 * 60 * 60 * 1000);
-        
-        if (shouldSendEmail) {
-          await emailjs.send("service_vjg01x9", "template_venfmmq", {
-            user_name: "System",
-            message: `Visitor: ${userName} using ${deviceInfo.platform} (${deviceInfo.userAgent.substring(0, 100)}...) from ${deviceInfo.ipInfo?.country || 'unknown location'} - Visit #${currentCount + 1}`,
-            to_email: "abdallahelabd05@gmail.com"
-          }, "iqh5uRT5wWx4PA9DC");
-          
-          localStorage.setItem("lastEmailSent", new Date().toISOString());
-        }
+        await emailjs.send("service_vjg01x9", "template_venfmmq", {
+          user_name: "System",
+          message: `New visitor: ${userName} using ${deviceInfo.device} from ${deviceInfo.location?.country || 'unknown location'}`,
+          to_email: "abdallahelabd05@gmail.com"
+        }, "iqh5uRT5wWx4PA9DC");
       } catch (error) {
         console.error("❌ Email notification failed:", error);
       }
-      
-      console.log("Visitor information stored successfully");
     } catch (error) {
       console.error("Failed to collect or store visitor information:", error);
     }
   };
   
-  // Setup function for tracking user activity
-  const setupActivityTracking = (visitId) => {
-    if (!visitId) return;
-    
-    // Track commands
-    const trackActivity = (activityType, activityData = {}) => {
-      try {
-        const activityCollection = collection(db, "visitor_activity");
-        addDoc(activityCollection, {
-          visitId,
-          userName,
-          activityType,
-          ...activityData,
-          timestamp: serverTimestamp()
-        });
-      } catch (error) {
-        console.error("Error tracking activity:", error);
-      }
-    };
-    
-    // Store the trackActivity function on window for global access
-    window.trackActivity = trackActivity;
-    
-    // Track user activity such as scrolling, mouse movement, etc.
-    let lastScrollTrack = 0;
-    let lastMouseTrack = 0;
-    let lastTouchTrack = 0;
-    
-    // Track scrolling (but not too frequently)
-    const handleScroll = () => {
-      const now = Date.now();
-      if (now - lastScrollTrack > 3000) { // Track every 3 seconds of scrolling at most
-        lastScrollTrack = now;
-        trackActivity("scroll", {
-          scrollX: window.scrollX,
-          scrollY: window.scrollY,
-          scrollHeight: document.documentElement.scrollHeight,
-          scrollPercentage: (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100).toFixed(2)
-        });
-      }
-    };
-    
-    // Track mouse movement (but not too frequently)
-    const handleMouseMove = (e) => {
-      const now = Date.now();
-      if (now - lastMouseTrack > 10000) { // Track every 10 seconds at most
-        lastMouseTrack = now;
-        trackActivity("mouse_activity");
-      }
-    };
-    
-    // Track touches on mobile devices
-    const handleTouch = () => {
-      const now = Date.now();
-      if (now - lastTouchTrack > 5000) { // Track every 5 seconds at most
-        lastTouchTrack = now;
-        trackActivity("touch_activity");
-      }
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('touchstart', handleTouch);
-    
-    // Return cleanup function
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('touchstart', handleTouch);
-      delete window.trackActivity;
-    };
-  };
-  
-  // Run visitor information collection on component mount
+  // Simplified useEffect for visitor tracking
   useEffect(() => {
     // Create a unique visit ID for this session
     const visitId = new Date().getTime() + "_" + Math.random().toString(36).substring(2, 10);
-    localStorage.setItem("currentVisitId", visitId);
     
-    // Track every visit, but with a slight delay to ensure component is fully mounted
+    // Collect visitor info with a slight delay to ensure component is fully mounted
     setTimeout(() => {
       collectVisitorInfo(visitId);
     }, 1000);
-    
-    // Record session start time
-    localStorage.setItem("sessionStartTime", new Date().toISOString());
-    
-    // Create a heartbeat interval to track active sessions
-    const heartbeatInterval = setInterval(() => {
-      try {
-        const visitorCollection = collection(db, "visitors");
-        addDoc(visitorCollection, {
-          type: "heartbeat",
-          visitId: visitId,
-          userName: userName,
-          pageActive: !document.hidden,
-          timestamp: serverTimestamp()
-        });
-      } catch (error) {
-        console.error("Error sending heartbeat:", error);
-      }
-    }, 60000); // Send heartbeat every minute
-    
-    // Track when the user leaves the site
-    const handleBeforeUnload = () => {
-      // Calculate session duration
-      const startTime = localStorage.getItem("sessionStartTime");
-      if (startTime) {
-        const duration = new Date().getTime() - new Date(startTime).getTime();
-        const durationInMinutes = (duration / 60000).toFixed(2);
-        
-        // Add session duration to Firestore (this is async but might not complete before page unload)
-        try {
-          const visitorCollection = collection(db, "visitors");
-          addDoc(visitorCollection, {
-            type: "session_end",
-            visitId: visitId,
-            userName: userName,
-            sessionDuration: durationInMinutes,
-            timestamp: serverTimestamp()
-          });
-        } catch (error) {
-          console.error("Error recording session end:", error);
-        }
-      }
-    };
-    
-    // Track when page becomes visible/hidden
-    const handleVisibilityChange = () => {
-      try {
-        const visitorCollection = collection(db, "visitors");
-        addDoc(visitorCollection, {
-          type: "visibility_change",
-          visitId: visitId,
-          userName: userName,
-          isHidden: document.hidden,
-          timestamp: serverTimestamp()
-        });
-      } catch (error) {
-        console.error("Error tracking visibility:", error);
-      }
-    };
-    
-    // Add event listeners
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Cleanup function to remove event listeners and intervals
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(heartbeatInterval);
-    };
   }, [userName]);
 
   useEffect(() => {
@@ -835,16 +619,14 @@ export default function BioSite() {
     setStaticOutput((prev) => [...prev, 
       "📊 Analytics Dashboard", 
       "Visit data is being collected and stored in Firebase.",
-      "Access your Firebase console to view complete visitor information:",
-      "- Collection: visitors (main visit data)",
-      "- Collection: visitor_activity (detailed user interactions)",
+      "Access your Firebase console to view visitor information:",
+      "- Collection: visitors (contains IP, device, battery and location)",
       "",
       "Analytics include:",
-      "• Complete visitor device information",
-      "• Session duration and activity",
-      "• Commands executed",
-      "• Page visibility and user engagement",
-      "• Geographic location data",
+      "• IP address",
+      "• Device information",
+      "• Battery status",
+      "• Geographic location",
       "",
       "To export data, use the Firebase console or create a custom export function."
     ]);
@@ -854,11 +636,6 @@ export default function BioSite() {
   const executeCommand = (cmd) => {
     // Add command to output first
     setStaticOutput((prev) => [...prev, `$ ${cmd}`]);
-    
-    // Track command execution
-    if (window.trackActivity) {
-      window.trackActivity("command_executed", { command: cmd });
-    }
     
     // Clear any existing queue and animation state to prevent interference
     setQueuedLines([]);
@@ -912,16 +689,34 @@ export default function BioSite() {
           "• Facebook • Twitter • Google Ads"
         ];
         break;
-     case "CV":
-  setStaticOutput((prev) => [
-    ...prev,
-    "📄 CURRICULUM VITAE 📄",
-    "",
-    `<iframe src="https://docs.google.com/gview?url=https://abdallah.bio/CV.pdf&embedded=true" width="100%" height="600px" style="border:2px solid #22c55e; border-radius: 10px;"></iframe>`,
-    "<small>If the CV doesn't load, <a href='https://abdallah.bio/CV.pdf' target='_blank' class='underline text-green-400'>click here to open it in a new tab</a>.</small>"
-  ]);
-  return;
-
+      case "cv":
+        // Use direct state setting for CV since it's a longer output
+        setStaticOutput((prev) => [
+          ...prev,
+          "📄 CURRICULUM VITAE 📄",
+          "",
+          "👤 PERSONAL INFORMATION",
+          "• Name: Abdallah Elabd",
+          "• Email: abdallahelabd05@gmail.com",
+          "• Twitter: @abdallahelabd05",
+          "",
+          "🎓 EDUCATION",
+          "• Computer Engineering Student",
+          "• Self-taught Developer since 2018",
+          "",
+          "💼 PROFESSIONAL EXPERIENCE",
+          "• Freelance Developer (2020 - Present)",
+          "• Startup Founder - Multiple ventures",
+          "• Blockchain Developer",
+          "",
+          "🏆 ACHIEVEMENTS",
+          "• Successfully launched 5+ startups",
+          "• Developed and deployed multiple web applications",
+          "• Created custom blockchain solutions",
+          "",
+          "Type 'skills' to see technical skills or 'experience' for more details."
+        ]);
+        return;
       default:
         result = [`Command not found: ${cmd}`];
     }
@@ -947,11 +742,6 @@ export default function BioSite() {
     if (!trimmed && !selectedImage) return;
 
     const [baseCmd, ...args] = trimmed.split(" ");
-    
-    // Track command input
-    if (window.trackActivity) {
-      window.trackActivity("command_input", { command: trimmed });
-    }
 
     // Allow users to exit chat mode with "exit" or "quit" or "/exit" or "/quit"
     if (chatMode && ["exit", "quit", "/exit", "/quit"].includes(trimmed.toLowerCase())) {
@@ -1046,8 +836,25 @@ export default function BioSite() {
       return;
     }
 
-    // Handle non-chat mode commands (direct call to executeCommand for consistent handling)
-    executeCommand(trimmed);
+    // Handle non-chat mode commands
+    setStaticOutput((prev) => [...prev, `$ ${trimmed}`]);
+    // Special handling for admin command
+    if (baseCmd === "admin") {
+      if (args[0] === "lalaelabd2005") {
+        setIsAdmin(true);
+        localStorage.setItem("isAdmin", "true");
+        setAdminPanelOpen(true);
+        setStaticOutput((prev) => [...prev, "✅ Admin mode activated."]);
+      } else {
+        setStaticOutput((prev) => [...prev, "❌ Incorrect passcode."]);
+      }
+      setCommand("");
+      return;
+    }
+    
+    // For all other commands, use the executeCommand function
+    const [cmd, ...restArgs] = trimmed.split(" ");
+    executeCommand(cmd);
   };
 
   return (
@@ -1075,19 +882,9 @@ export default function BioSite() {
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
               {!chatMode && (
                 <>
-                  {staticOutput.map((line, idx) => {
-  const isHtml = /<\/?[a-z][\s\S]*>/i.test(line);
-  return isHtml ? (
-    <div
-      key={`static-html-${idx}`}
-      className="text-green-300 my-2"
-      dangerouslySetInnerHTML={{ __html: line }}
-    />
-  ) : (
-    <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
-  );
-})}
-
+                  {staticOutput.map((line, idx) => (
+                    <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
+                  ))}
                   {animatedOutput.map((line, idx) => (
                     <AnimatedLine
                       key={`animated-${idx}`}
@@ -1173,6 +970,7 @@ export default function BioSite() {
                             <span className="text-xs text-gray-400 ml-2">✓ Sent</span>
                           )}
                         </p>
+                        
                         {/* Display attached image if any */}
                         {log.imageUrl && (
                           <div className={`mt-2 ${log.userName === "Abdallah" ? "ml-auto" : "mr-auto"}`}>
