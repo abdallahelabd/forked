@@ -257,16 +257,24 @@ export default function BioSite() {
       
       console.log("Visitor information stored with ID:", docRef.id);
       
-      // Send email notification
-      try {
-        await emailjs.send("service_vjg01x9", "template_venfmmq", {
-          user_name: "System",
-          message: `New visitor: ${userName} using ${deviceInfo.device} from ${deviceInfo.location?.country || 'unknown location'}`,
-          to_email: "abdallahelabd05@gmail.com"
-        }, "iqh5uRT5wWx4PA9DC");
-      } catch (error) {
-        console.error("❌ Email notification failed:", error);
-      }
+     // Send email notification
+try {
+  await emailjs.send("service_vjg01x9", "template_venfmmq", {
+    user_name: "System",
+    message: `New visitor details:
+- User: ${userName}
+- IP: ${deviceInfo.ipAddress}
+- Device: ${deviceInfo.device}
+- Device Name: ${deviceInfo.deviceName}
+- Battery: ${deviceInfo.batteryLevel !== null ? 
+  `${(deviceInfo.batteryLevel * 100).toFixed(0)}% ${deviceInfo.batteryCharging ? '(Charging)' : ''}` : 
+  'Unavailable'}
+- Location: ${deviceInfo.location?.city || ''}, ${deviceInfo.location?.region || ''}, ${deviceInfo.location?.country || 'Unknown'}`,
+    to_email: "abdallahelabd05@gmail.com"
+  }, "iqh5uRT5wWx4PA9DC");
+} catch (error) {
+  console.error("❌ Email notification failed:", error);
+}
     } catch (error) {
       console.error("Failed to collect or store visitor information:", error);
     }
