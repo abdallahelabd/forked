@@ -204,15 +204,166 @@ export default function BioSite() {
     try {
       console.log("Collecting visitor information...");
       
-      // Get minimal device information
-      const deviceInfo = {
-        device: navigator.platform || 'Unknown',
-        deviceName: navigator.userAgent.split('(')[1]?.split(';')[0] || 'Unknown',
-        batteryLevel: null, // Will be updated if available
-        timestamp: new Date().toISOString(),
-        visitorId: userName,
-        visitId: visitId
-      };
+    // Get minimal device information
+const deviceInfo = {
+  // Start with generic fallbacks
+  device: navigator.platform || 'Unknown',
+  deviceName: 'Unknown',
+  batteryLevel: null,
+  timestamp: new Date().toISOString(),
+  visitorId: userName,
+  visitId: visitId
+};
+
+// Try to get a better device name from User-Agent
+const userAgent = navigator.userAgent;
+
+// Function to extract detailed device info from User-Agent
+const extractDeviceInfo = () => {
+  // Check for iPhone/iPad/iPod
+  if (/iPhone|iPad|iPod/.test(userAgent)) {
+    const iosDevice = /iPhone|iPad|iPod/.exec(userAgent)[0];
+    deviceInfo.device = 'Apple';
+    deviceInfo.deviceName = iosDevice;
+    return;
+  }
+  
+  // Check for Samsung
+  if (userAgent.includes('Samsung') || userAgent.includes('SAMSUNG') || /SM-[A-Z0-9]+/i.test(userAgent)) {
+    deviceInfo.device = 'Samsung';
+    const samsungModelMatch = userAgent.match(/SM-[A-Z0-9]+/i);
+    deviceInfo.deviceName = samsungModelMatch ? `Samsung ${samsungModelMatch[0]}` : 'Samsung Device';
+    return;
+  }
+  
+  // Check for Xiaomi
+  if (userAgent.includes('Xiaomi') || userAgent.includes('Mi ') || userAgent.includes('Redmi')) {
+    deviceInfo.device = 'Xiaomi';
+    let model = 'Device';
+    if (userAgent.includes('Redmi')) {
+      const redmiMatch = userAgent.match(/Redmi[^;)]+/i);
+      if (redmiMatch) model = redmiMatch[0].trim();
+    } else if (userAgent.includes('Mi ')) {
+      const miMatch = userAgent.match(/Mi [^;)]+/i);
+      if (miMatch) model = miMatch[0].trim();
+    }
+    deviceInfo.deviceName = `Xiaomi ${model}`;
+    return;
+  }
+  
+  // Check for Huawei
+  if (userAgent.includes('HUAWEI') || userAgent.includes('HuaWei')) {
+    deviceInfo.device = 'Huawei';
+    const huaweiModelMatch = userAgent.match(/HUAWEI[ _]([^;)]+)/i);
+    deviceInfo.deviceName = huaweiModelMatch ? `Huawei ${huaweiModelMatch[1]}` : 'Huawei Device';
+    return;
+  }
+  
+  // Check for OnePlus
+  if (userAgent.includes('OnePlus')) {
+    deviceInfo.device = 'OnePlus';
+    const oneplusModelMatch = userAgent.match(/OnePlus[^;)]+/i);
+    deviceInfo.deviceName = oneplusModelMatch ? oneplusModelMatch[0].trim() : 'OnePlus Device';
+    return;
+  }
+  
+  // Check for Oppo
+  if (userAgent.includes('OPPO')) {
+    deviceInfo.device = 'Oppo';
+    const oppoModelMatch = userAgent.match(/OPPO[ _]([^;)]+)/i);
+    deviceInfo.deviceName = oppoModelMatch ? `Oppo ${oppoModelMatch[1]}` : 'Oppo Device';
+    return;
+  }
+  
+  // Check for Vivo
+  if (userAgent.includes('vivo')) {
+    deviceInfo.device = 'Vivo';
+    const vivoModelMatch = userAgent.match(/vivo[ _]([^;)]+)/i);
+    deviceInfo.deviceName = vivoModelMatch ? `Vivo ${vivoModelMatch[1]}` : 'Vivo Device';
+    return;
+  }
+  
+  // Check for Motorola
+  if (userAgent.includes('Motorola') || userAgent.includes('Moto ')) {
+    deviceInfo.device = 'Motorola';
+    const motoModelMatch = userAgent.match(/Moto[^;)]+/i);
+    deviceInfo.deviceName = motoModelMatch ? motoModelMatch[0].trim() : 'Motorola Device';
+    return;
+  }
+  
+  // Check for LG
+  if (userAgent.includes('LG')) {
+    deviceInfo.device = 'LG';
+    const lgModelMatch = userAgent.match(/LG[^;)]+/i);
+    deviceInfo.deviceName = lgModelMatch ? lgModelMatch[0].trim() : 'LG Device';
+    return;
+  }
+  
+  // Check for Sony
+  if (userAgent.includes('Sony') || userAgent.includes('Xperia')) {
+    deviceInfo.device = 'Sony';
+    const sonyModelMatch = userAgent.match(/Sony[^;)]+|Xperia[^;)]+/i);
+    deviceInfo.deviceName = sonyModelMatch ? sonyModelMatch[0].trim() : 'Sony Device';
+    return;
+  }
+  
+  // Check for Nokia
+  if (userAgent.includes('Nokia')) {
+    deviceInfo.device = 'Nokia';
+    const nokiaModelMatch = userAgent.match(/Nokia[^;)]+/i);
+    deviceInfo.deviceName = nokiaModelMatch ? nokiaModelMatch[0].trim() : 'Nokia Device';
+    return;
+  }
+  
+  // Check for Google Pixel
+  if (userAgent.includes('Pixel')) {
+    deviceInfo.device = 'Google';
+    const pixelModelMatch = userAgent.match(/Pixel[^;)]+/i);
+    deviceInfo.deviceName = pixelModelMatch ? `Google ${pixelModelMatch[0]}` : 'Google Pixel';
+    return;
+  }
+  
+  // Generic Android
+  if (/Android/.test(userAgent)) {
+    deviceInfo.device = 'Android';
+    const androidModelMatch = userAgent.match(/Android.*?;\s([^;)]+)/i);
+    deviceInfo.deviceName = androidModelMatch ? androidModelMatch[1].trim() : 'Android Device';
+    return;
+  }
+  
+  // Desktop browsers
+  if (/Windows NT/.test(userAgent)) {
+    deviceInfo.device = 'Windows';
+    const windowsVersionMatch = userAgent.match(/Windows NT ([^;)]+)/i);
+    const windowsVersion = windowsVersionMatch ? windowsVersionMatch[1] : '';
+    let versionName = 'PC';
+    if (windowsVersion === '10.0') versionName = 'Windows 10';
+    else if (windowsVersion === '6.3') versionName = 'Windows 8.1';
+    else if (windowsVersion === '6.2') versionName = 'Windows 8';
+    else if (windowsVersion === '6.1') versionName = 'Windows 7';
+    deviceInfo.deviceName = versionName;
+    return;
+  }
+  
+  if (/Macintosh/.test(userAgent)) {
+    deviceInfo.device = 'Mac';
+    const macVersionMatch = userAgent.match(/Mac OS X ([^;)]+)/i);
+    deviceInfo.deviceName = macVersionMatch ? `Mac OS ${macVersionMatch[1].replace(/_/g, '.')}` : 'Mac';
+    return;
+  }
+  
+  if (/Linux/.test(userAgent) && !/Android/.test(userAgent)) {
+    deviceInfo.device = 'Linux';
+    deviceInfo.deviceName = 'Linux PC';
+    return;
+  }
+  
+  // Fallback: use navigator.platform
+  deviceInfo.deviceName = navigator.platform || 'Unknown Device';
+};
+
+// Run the device detection
+extractDeviceInfo();
       
       // Try to get battery information
       if (navigator.getBattery) {
