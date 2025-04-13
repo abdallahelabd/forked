@@ -1024,9 +1024,19 @@ try {
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-6 shadow-inner shadow-green-800/20 overflow-x-auto max-h-[40vh]">
               {!chatMode && (
                 <>
-                  {staticOutput.map((line, idx) => (
-                    <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
-                  ))}
+                 {staticOutput.map((line, idx) => {
+  const isHtml = /<\/?[a-z][\s\S]*>/i.test(line);
+  return isHtml ? (
+    <div
+      key={`static-html-${idx}`}
+      className="text-green-300 my-2"
+      dangerouslySetInnerHTML={{ __html: line }}
+    />
+  ) : (
+    <pre key={`static-${idx}`} className="whitespace-pre-wrap break-words text-green-300">{line}</pre>
+  );
+})}
+
                   {animatedOutput.map((line, idx) => (
                     <AnimatedLine
                       key={`animated-${idx}`}
