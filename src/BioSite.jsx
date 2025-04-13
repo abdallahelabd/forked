@@ -121,7 +121,7 @@ const FirestoreImage = ({ imageId, className }) => {
 
 function PinnedCommands({ setCommand, inputRef, executeCommand }) {
   // Add "cv" to the pinned commands
-  const pinnedCommands = ["hello", "experience", "skills", "cv", "chat"];
+  const pinnedCommands = ["hello", "experience", "skills", "CV", "chat"];
   
   const handlePinnedCommand = (cmd) => {
     // Execute the command directly instead of going through the input field
