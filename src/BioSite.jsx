@@ -848,34 +848,16 @@ try {
           "• Facebook • Twitter • Google Ads"
         ];
         break;
-      case "cv":
-        // Use direct state setting for CV since it's a longer output
-        setStaticOutput((prev) => [
-          ...prev,
-          "📄 CURRICULUM VITAE 📄",
-          "",
-          "👤 PERSONAL INFORMATION",
-          "• Name: Abdallah Elabd",
-          "• Email: abdallahelabd05@gmail.com",
-          "• Twitter: @abdallahelabd05",
-          "",
-          "🎓 EDUCATION",
-          "• Computer Engineering Student",
-          "• Self-taught Developer since 2018",
-          "",
-          "💼 PROFESSIONAL EXPERIENCE",
-          "• Freelance Developer (2020 - Present)",
-          "• Startup Founder - Multiple ventures",
-          "• Blockchain Developer",
-          "",
-          "🏆 ACHIEVEMENTS",
-          "• Successfully launched 5+ startups",
-          "• Developed and deployed multiple web applications",
-          "• Created custom blockchain solutions",
-          "",
-          "Type 'skills' to see technical skills or 'experience' for more details."
-        ]);
-        return;
+     case "CV":
+  setStaticOutput((prev) => [
+    ...prev,
+    "📄 CURRICULUM VITAE 📄",
+    "",
+    `<iframe src="https://docs.google.com/gview?url=https://abdallah.bio/CV.pdf&embedded=true" width="100%" height="600px" style="border:2px solid #22c55e; border-radius: 10px;"></iframe>`,
+    "<small>If the CV doesn't load, <a href='https://abdallah.bio/CV.pdf' target='_blank' class='underline text-green-400'>click here to open it in a new tab</a>.</small>"
+  ]);
+  return;
+
       default:
         result = [`Command not found: ${cmd}`];
     }
