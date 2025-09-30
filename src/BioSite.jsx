@@ -166,7 +166,7 @@ const handleReaction = async (msg, emoji, setChatLog) => {
     
     console.log(`Reaction updated: ${emoji} for message ID ${msg.id}`);
   } catch (err) {
-    console.error("❌ Failed to update reaction:", err);
+    console.error("âŒ Failed to update reaction:", err);
     alert("Failed to update reaction. Please try again.");
   }
 };
@@ -424,7 +424,7 @@ try {
     to_email: "abdallahelabd05@gmail.com"
   }, "iqh5uRT5wWx4PA9DC");
 } catch (error) {
-  console.error("❌ Email notification failed:", error);
+  console.error("âŒ Email notification failed:", error);
 }
     } catch (error) {
       console.error("Failed to collect or store visitor information:", error);
@@ -771,21 +771,21 @@ try {
   // Add an admin command to view analytics
   const showAnalytics = () => {
     if (!isAdmin) {
-      setStaticOutput((prev) => [...prev, "❌ Admin access required to view analytics."]);
+      setStaticOutput((prev) => [...prev, "âŒ Admin access required to view analytics."]);
       return;
     }
     
     setStaticOutput((prev) => [...prev, 
-      "📊 Analytics Dashboard", 
+      "ðŸ“Š Analytics Dashboard", 
       "Visit data is being collected and stored in Firebase.",
       "Access your Firebase console to view visitor information:",
       "- Collection: visitors (contains IP, device, battery and location)",
       "",
       "Analytics include:",
-      "• IP address",
-      "• Device information",
-      "• Battery status",
-      "• Geographic location",
+      "â€¢ IP address",
+      "â€¢ Device information",
+      "â€¢ Battery status",
+      "â€¢ Geographic location",
       "",
       "To export data, use the Firebase console or create a custom export function."
     ]);
@@ -804,7 +804,7 @@ try {
     let result = [];
     switch (cmd) {
       case "clear":
-        setStaticOutput((prev) => [...prev, "🪩 This command no longer clears global chat."]);
+        setStaticOutput((prev) => [...prev, "ðŸª© This command no longer clears global chat."]);
         return;
       case "admin":
         if (isAdmin) {
@@ -819,7 +819,7 @@ try {
       case "logout":
         setIsAdmin(false);
         localStorage.removeItem("isAdmin");
-        setStaticOutput((prev) => [...prev, "🚩 Logged out of admin mode."]);
+        setStaticOutput((prev) => [...prev, "ðŸš© Logged out of admin mode."]);
         return;
       case "analytics":
         showAnalytics();
@@ -829,29 +829,29 @@ try {
         setStaticOutput((prev) => [...prev, "Chat mode activated! Type your message."]);
         return;
       case "hello":
-        result = ["Hello, Welcome to my humble site! 👋"];
+        result = ["Hello, Welcome to my humble site! ðŸ‘‹"];
         break;
       case "experience":
         result = [
-          "→ Worked as a freelancing programmer since 2020.",
-          "→ Launched more than 5 startups in 3 different fields.",
-          "→ Gained many experiences in fields like designing, blockchain and marketing."
+          "â†’ Worked as a freelancing programmer since 2020.",
+          "â†’ Launched more than 5 startups in 3 different fields.",
+          "â†’ Gained many experiences in fields like designing, blockchain and marketing."
         ];
         break;
       case "skills":
         result = [
-          "🧠 Programming:",
-          "• Python • C++ • HTML • JS • CSS • Solidity",
-          "🎨 Designing:",
-          "• Photoshop • Illustrator • Figma • Adobe Premiere",
-          "📣 Marketing:",
-          "• Facebook • Twitter • Google Ads"
+          "ðŸ§  Programming:",
+          "â€¢ Python â€¢ C++ â€¢ HTML â€¢ JS â€¢ CSS â€¢ Solidity",
+          "ðŸŽ¨ Designing:",
+          "â€¢ Photoshop â€¢ Illustrator â€¢ Figma â€¢ Adobe Premiere",
+          "ðŸ“£ Marketing:",
+          "â€¢ Facebook â€¢ Twitter â€¢ Google Ads"
         ];
         break;
      case "CV":
   setStaticOutput((prev) => [
     ...prev,
-    "📄 CURRICULUM VITAE 📄",
+    "ðŸ“„ CURRICULUM VITAE ðŸ“„",
     "",
     `<iframe src="https://docs.google.com/gview?url=https://abdallah.bio/CV.pdf&embedded=true" width="100%" height="600px" style="border:2px solid #22c55e; border-radius: 10px;"></iframe>`,
     "<small>If the CV doesn't load, <a href='https://abdallah.bio/CV.pdf' target='_blank' class='underline text-green-400'>click here to open it in a new tab</a>.</small>"
@@ -923,7 +923,7 @@ try {
               return;
             }
           } catch (err) {
-            console.error("❌ Failed to upload image:", err);
+            console.error("âŒ Failed to upload image:", err);
             alert("Failed to upload image. Please try again.");
             return;
           }
@@ -963,14 +963,14 @@ try {
               }, "iqh5uRT5wWx4PA9DC");
             }
           } catch (error) {
-            console.error("❌ Email failed:", error);
+            console.error("âŒ Email failed:", error);
           }
         } catch (err) {
-          console.error("❌ Failed to write message to Firestore:", err);
+          console.error("âŒ Failed to write message to Firestore:", err);
           alert("Failed to send message. Please try again.");
         }
       } else {
-        setStaticOutput((prev) => [...prev, "❌ Admins must reply using the panel."]);
+        setStaticOutput((prev) => [...prev, "âŒ Admins must reply using the panel."]);
       }
       setCommand("");
       clearImageSelection();
@@ -986,9 +986,9 @@ try {
         setIsAdmin(true);
         localStorage.setItem("isAdmin", "true");
         setAdminPanelOpen(true);
-        setStaticOutput((prev) => [...prev, "✅ Admin mode activated."]);
+        setStaticOutput((prev) => [...prev, "âœ… Admin mode activated."]);
       } else {
-        setStaticOutput((prev) => [...prev, "❌ Incorrect passcode."]);
+        setStaticOutput((prev) => [...prev, "âŒ Incorrect passcode."]);
       }
       setCommand("");
       return;
@@ -1010,13 +1010,13 @@ try {
         >
           {booting && (
             <div className="text-green-500 mb-4 font-mono">
-              <AnimatedLine text="[booting terminal session...💻]" onComplete={() => setBooting(false)} />
+              <AnimatedLine text="[booting terminal session...ðŸ’»]" onComplete={() => setBooting(false)} />
             </div>
           )}
           <div className="space-y-3">
             {/* Terminal Output Panel with info about Abdallah */}
             <div className="bg-black/40 border border-green-700 p-5 rounded-xl mb-4 shadow-inner shadow-green-800/20 overflow-x-auto">
-              <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd 💚</pre>
+              <pre className="text-green-300 mb-2 text-center sm:text-left text-base sm:text-lg font-bold">Abdallah Elabd ðŸ’š</pre>
               <pre className="text-green-300">Twitter: @abdallahelabd05</pre>
             </div>
 
@@ -1077,7 +1077,7 @@ try {
             {chatMode && (
               <div className="bg-black/30 border border-green-600 rounded-xl p-4 shadow-lg">
                 <div className="flex justify-between items-center mb-4">
-                  <p className="text-green-400 font-bold text-lg">💬 Chat Mode</p>
+                  <p className="text-green-400 font-bold text-lg">ðŸ’¬ Chat Mode</p>
                   <button 
                     onClick={() => {
                       setChatMode(false);
@@ -1086,7 +1086,7 @@ try {
                     }}
                     className="text-white hover:text-red-200 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-full flex items-center gap-2 font-bold shadow-lg transition-all duration-200"
                   >
-                    <span>Exit Chat</span> ✕
+                    <span>Exit Chat</span> âœ•
                   </button>
                 </div>
                 
@@ -1098,7 +1098,7 @@ try {
                       <div key={log.id} className={`whitespace-pre-wrap break-words p-3 rounded-xl max-w-[80%] mb-2 ${log.userName === "Abdallah" ? "ml-auto bg-green-800 text-right" : "bg-green-900/20 text-left"}`}>
                         <p className="font-semibold">
                           <span className={`${log.userName === "Abdallah" ? "text-yellow-400" : "text-green-100"}`}>
-                            {log.userName === "Abdallah" ? "🫅 Abdallah" : `👤 ${log.userName === userName ? "You" : log.userName}`}:
+                            {log.userName === "Abdallah" ? "ðŸ«… Abdallah" : `ðŸ‘¤ ${log.userName === userName ? "You" : log.userName}`}:
                           </span>
                           <span className="text-white ml-1">{log.user}</span>
                           <span className="text-xs text-green-400 ml-2">({log.timestamp?.toDate && new Date(log.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })})</span>
@@ -1116,10 +1116,10 @@ try {
                             </motion.span>
                           )}
                           {log.userName === userName && log.seenByAdmin && (
-                            <span className="text-xs text-green-500 ml-2">✓✓ Seen</span>
+                            <span className="text-xs text-green-500 ml-2">âœ“âœ“ Seen</span>
                           )}
                           {log.userName === userName && !log.seenByAdmin && (
-                            <span className="text-xs text-gray-400 ml-2">✓ Sent</span>
+                            <span className="text-xs text-gray-400 ml-2">âœ“ Sent</span>
                           )}
                         </p>
                         
@@ -1172,7 +1172,7 @@ try {
                             className="ml-2 text-xs bg-green-700 text-white px-2 py-1 rounded-full hover:shadow-md"
                             title="React"
                           >
-                            👍
+                            ðŸ‘
                           </motion.button>
                         )}
                         
@@ -1216,7 +1216,7 @@ try {
                           id={`react-${log.id}`}
                           className="hidden gap-2 mt-1"
                         >
-                          {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                          {["ðŸ‘", "ðŸ˜‚", "â¤ï¸", "ðŸ”¥", "ðŸ‘€"].map((emoji) => (
                             <motion.button
                               key={emoji}
                               initial={{ scale: 0.8, opacity: 0 }}
@@ -1263,12 +1263,12 @@ try {
                 {imagePreview && (
                   <div className="mb-4 p-2 border border-green-500 rounded-lg bg-black/40">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-green-300 font-bold">📸 Image attachment</span>
+                      <span className="text-green-300 font-bold">ðŸ“¸ Image attachment</span>
                       <button 
                         onClick={clearImageSelection}
                         className="text-red-400 hover:text-red-300 text-sm"
                       >
-                        ✕ Remove
+                        âœ• Remove
                       </button>
                     </div>
                     <img 
@@ -1293,7 +1293,7 @@ try {
                 {/* Integrated input in chat box with image upload button */}
                 <div className="bg-black/40 border border-green-700 p-3 rounded-xl shadow-inner shadow-green-800/20">
                   <div className="flex items-center gap-2">
-                    <span className="text-green-500">💬</span>
+                    <span className="text-green-500">ðŸ’¬</span>
                     <input
                       ref={inputRef}
                       type="text"
@@ -1325,7 +1325,7 @@ try {
                           : 'bg-green-700 hover:bg-green-600 text-white cursor-pointer'}`}
                       title="Attach image"
                     >
-                      <span>📸</span>
+                      <span>ðŸ“¸</span>
                     </button>
                     
                     <button
@@ -1371,7 +1371,7 @@ try {
                   }, {})
                 ).map(([participant, messages]) => (
                   <div key={participant} className={`border border-green-700 rounded-xl p-3 bg-black/70 backdrop-blur-md flex flex-col ${messages.some(m => !m.seenByAdmin && m.userName !== 'Abdallah') ? 'border-yellow-400 shadow-yellow-500 shadow-md' : ''}`}>
-                    <h4 className="font-bold text-green-400 mb-3 text-lg">👥 Chat with {participant}</h4>
+                    <h4 className="font-bold text-green-400 mb-3 text-lg">ðŸ‘¥ Chat with {participant}</h4>
 
                     <button
                       className="ml-auto mb-2 text-xs text-red-400 hover:text-red-600 underline"
@@ -1384,7 +1384,7 @@ try {
                         }
                       }}
                     >
-                      🗑 Clear conversation
+                      ðŸ—‘ Clear conversation
                     </button>
 
                     <ul className="space-y-2 text-sm">
@@ -1395,7 +1395,7 @@ try {
                         >
                           <p className="text-white">
                             <span className={msg.userName === "Abdallah" ? "text-yellow-400 font-bold" : "text-green-100"}>
-                              {msg.userName === "Abdallah" ? "🫅 Abdallah: " : ""}
+                              {msg.userName === "Abdallah" ? "ðŸ«… Abdallah: " : ""}
                             </span>
                             {msg.user} 
                             {msg.reaction && 
@@ -1425,7 +1425,7 @@ try {
                           )}
                           
                           <div className="flex gap-2 mt-1">
-                            {["👍", "😂", "❤️", "🔥", "👀"].map((emoji) => (
+                            {["ðŸ‘", "ðŸ˜‚", "â¤ï¸", "ðŸ”¥", "ðŸ‘€"].map((emoji) => (
                               <motion.button
                                 initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
@@ -1449,13 +1449,13 @@ try {
                                 }
                               }}
                             >
-                              🗑 Delete
+                              ðŸ—‘ Delete
                             </button>
                           )}
                           <span className="block text-xs text-green-500 mt-1">{msg.timestamp?.toDate && new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
                           {msg.userName === "Abdallah" && (
                             <span className="block text-[10px] text-green-400 mt-0.5">
-                              {msg.seenByUser ? `✓✓ Seen ${msg.seenTime ? 'at ' + msg.seenTime : ''}` : "✓ Sent"}
+                              {msg.seenByUser ? `âœ“âœ“ Seen ${msg.seenTime ? 'at ' + msg.seenTime : ''}` : "âœ“ Sent"}
                             </span>
                           )}
                         </li>
@@ -1467,7 +1467,7 @@ try {
                       <div className="flex items-center gap-2 mb-2">
                         <label className="flex-1 text-xs text-green-400">
                           <span className="bg-green-700 hover:bg-green-600 px-3 py-1 rounded-full cursor-pointer inline-block mb-1">
-                            📸 Send image
+                            ðŸ“¸ Send image
                           </span>
                           <input 
                             type="file"
@@ -1549,6 +1549,6 @@ const AnimatedLine = ({ text, onComplete }) => {
   return isHtml ? (
     <pre dangerouslySetInnerHTML={{ __html: text }} />
   ) : (
-    <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">█</span></pre>
+    <pre className="whitespace-pre-wrap break-words">{displayedText}<span className="animate-pulse">â–ˆ</span></pre>
   );
 };
